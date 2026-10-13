@@ -1,0 +1,2560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mochi · Email &amp; Website Checker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #F2EADF;
+    --bg-2: #EADFD0;
+    --surface: #F7F1E8;
+    --ink: #3B2F2A;
+    --ink-soft: #7A6A60;
+    --accent: #FF8A65;
+    --accent-ink: #FFFFFF;
+    --hi: rgba(255,255,255,.85);
+    --lo: rgba(150,115,85,.28);
+    --in-lo: rgba(120,90,60,.12);
+
+    --mint: #BDE8CF;  --mint-ink: #1E6B46;
+    --butter: #FFE2A1; --butter-ink: #8A5A00;
+    --coral: #FFC1B4; --coral-ink: #A23A2A;
+    --lilac: #DAD3F6; --lilac-ink: #4B3E99;
+    --peach: #FFD7C2;
+
+    --r-lg: 34px; --r-md: 24px; --r-sm: 16px;
+    --clay: 16px 16px 34px var(--lo), -10px -10px 26px var(--hi),
+            inset -5px -6px 12px var(--in-lo), inset 6px 6px 12px var(--hi);
+    --clay-sm: 8px 8px 18px var(--lo), -6px -6px 14px var(--hi),
+               inset -3px -4px 8px var(--in-lo), inset 3px 3px 8px var(--hi);
+    --pressed: inset 6px 6px 14px var(--lo), inset -6px -6px 14px var(--hi);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #2B231F; --bg-2: #241D1A; --surface: #342A25;
+      --ink: #F5EBE2; --ink-soft: #BFAEA2;
+      --hi: rgba(255,240,225,.07); --lo: rgba(0,0,0,.5); --in-lo: rgba(0,0,0,.25);
+      --mint: #2F5A45; --mint-ink: #BDF0D3;
+      --butter: #5E4A1E; --butter-ink: #FFE2A1;
+      --coral: #63332B; --coral-ink: #FFC9BE;
+      --lilac: #3F3866; --lilac-ink: #DCD5FF;
+      --peach: #6A4636;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 500px at 85% -10%, color-mix(in srgb, var(--peach) 55%, transparent), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, color-mix(in srgb, var(--lilac) 50%, transparent), transparent 60%),
+      var(--bg);
+    color: var(--ink);
+    font: 600 16px/1.5 "Nunito", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+  .wrap { max-width: 560px; margin: 0 auto; padding: 28px 16px 64px; }
+
+  /* top bar */
+  .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .brand { font: 700 20px "Fredoka", sans-serif; letter-spacing: .2px; display: flex; gap: 8px; align-items: center; }
+  .brand .logo { width: 34px; height: 34px; filter: drop-shadow(3px 4px 5px var(--lo)); transition: transform .3s; }
+  .brand:hover .logo { transform: scale(1.1, .9); }
+  .badge { font-size: 13px; font-weight: 800; padding: 7px 14px; border-radius: 999px; background: var(--surface); box-shadow: var(--clay-sm); color: var(--ink-soft); }
+  .badge.demo { background: var(--butter); color: var(--butter-ink); }
+
+  /* hero */
+  .hero { text-align: center; }
+  .mascot { width: 150px; height: 130px; margin: 6px auto 4px; display: block; overflow: visible; }
+  .mascot .body { transition: fill .5s ease; }
+  .mascot .wob { transform-origin: 75px 120px; transform-box: view-box; }
+  .mascot .sprout { transform-origin: 75px 30px; transform-box: view-box; animation: sway 3.2s ease-in-out infinite; }
+  .happy .mascot .sprout { animation: wiggle .5s ease-in-out 3; }
+  .sad .mascot .sprout { transform: rotate(18deg); animation: none; transition: transform .6s; }
+  @keyframes sway { 0%,100% { transform: rotate(-6deg) } 50% { transform: rotate(6deg) } }
+  @keyframes wiggle { 0%,100% { transform: rotate(0) } 25% { transform: rotate(-16deg) } 75% { transform: rotate(16deg) } }
+  .thinking .mascot .wob { animation: squish 1.1s ease-in-out infinite; }
+  .happy .mascot .wob { animation: hop .7s cubic-bezier(.3,1.6,.5,1) 1; }
+  .sad .mascot .wob { animation: droop .8s ease 1 forwards; }
+  @keyframes squish { 0%,100% { transform: scale(1,1) } 50% { transform: scale(1.06,.92) } }
+  @keyframes hop { 0% { transform: translateY(0) scale(1,1) } 30% { transform: translateY(0) scale(1.1,.88) } 60% { transform: translateY(-16px) scale(.95,1.06) } 100% { transform: none } }
+  @keyframes droop { to { transform: translateY(4px) scale(1.03,.96) } }
+  .eyes-dot, .eyes-happy, .brows, .sweat, .q { transition: opacity .25s; }
+  .eyes-happy, .brows, .sweat, .q { opacity: 0; }
+  .happy .eyes-dot { opacity: 0 } .happy .eyes-happy { opacity: 1 }
+  .worried .sweat, .sad .brows, .confused .q { opacity: 1 }
+  .pupils { transition: transform .3s ease; }
+  .typing .pupils { transform: translate(0, 3px); }
+  .thinking .pupils { animation: look 1.6s ease-in-out infinite; }
+  @keyframes look { 0%,100% { transform: translate(-3px,-2px) } 50% { transform: translate(3px,-2px) } }
+
+  h1 { font: 700 clamp(30px, 7vw, 40px)/1.1 "Fredoka", sans-serif; margin: 6px 0 8px; letter-spacing: -.3px; }
+  .sub { color: var(--ink-soft); margin: 0 auto 26px; max-width: 380px; }
+
+  /* form */
+  form { position: relative; }
+  .field {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border-radius: 999px; padding: 8px;
+    box-shadow: var(--clay);
+  }
+  .field input {
+    flex: 1; min-width: 0; border: 0; outline: 0; background: var(--bg-2);
+    border-radius: 999px; padding: 15px 20px; font-size: 17px; font-weight: 700;
+    box-shadow: var(--pressed);
+  }
+  .field input::placeholder { color: var(--ink-soft); opacity: .7; font-weight: 600; }
+  .field:focus-within { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 4px; }
+  .go {
+    border: 0; cursor: pointer; border-radius: 999px; padding: 15px 24px;
+    background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: 16px;
+    box-shadow: 8px 8px 18px rgba(230,110,70,.35), -4px -4px 12px var(--hi),
+                inset -4px -5px 10px rgba(160,50,20,.25), inset 4px 4px 10px rgba(255,255,255,.45);
+    transition: transform .12s ease, box-shadow .12s ease; white-space: nowrap;
+  }
+  .go:hover { transform: translateY(-1px); }
+  .go:active { transform: translateY(1px) scale(.98); box-shadow: inset 4px 4px 10px rgba(160,50,20,.35), inset -3px -3px 8px rgba(255,255,255,.35); }
+  .go[disabled] { opacity: .75; cursor: progress; }
+  .hint { min-height: 22px; margin: 12px 4px 0; font-size: 14px; color: var(--ink-soft); text-align: center; }
+  .hint.err { color: var(--coral-ink); font-weight: 800; }
+  kbd { font: 800 12px "Nunito"; padding: 2px 7px; border-radius: 8px; background: var(--surface); box-shadow: var(--clay-sm); }
+
+  /* loading */
+  .loading { margin-top: 26px; text-align: center; color: var(--ink-soft); display: none; }
+  .loading.on { display: block; }
+  .dots { display: inline-flex; gap: 7px; margin-bottom: 8px; }
+  .dots span { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: var(--clay-sm); animation: b 1s ease-in-out infinite; }
+  .dots span:nth-child(2) { animation-delay: .15s } .dots span:nth-child(3) { animation-delay: .3s }
+  @keyframes b { 0%,100% { transform: translateY(0) } 40% { transform: translateY(-9px) } }
+
+  /* result */
+  .result {
+    margin-top: 28px; border-radius: var(--r-lg); padding: 26px 24px 22px;
+    background: var(--tone, var(--surface)); color: var(--tone-ink, var(--ink));
+    box-shadow: var(--clay); display: none;
+    animation: pop .45s cubic-bezier(.3,1.4,.5,1);
+  }
+  .result.on { display: block; }
+  .result:focus { outline: none; }
+  @keyframes pop { from { opacity: 0; transform: translateY(14px) scale(.97) } to { opacity: 1; transform: none } }
+  .r-head { display: flex; align-items: center; gap: 14px; }
+  .r-icon { flex: none; width: 52px; height: 52px; border-radius: 18px; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--tone-ink) 14%, var(--tone)); box-shadow: var(--clay-sm); }
+  .r-icon svg { width: 26px; height: 26px; }
+  .r-title { font: 700 26px/1.1 "Fredoka", sans-serif; margin: 0; }
+  .r-email { font-size: 14px; opacity: .8; word-break: break-all; margin-top: 2px; }
+  .r-why { margin: 16px 0 0; font-size: 16px; color: var(--ink); }
+  .r-advice { margin: 6px 0 0; font-size: 14px; color: var(--ink-soft); }
+
+  .dym { margin-top: 14px; display: none; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: var(--surface); border-radius: var(--r-sm); padding: 12px 14px; box-shadow: var(--clay-sm); color: var(--ink); }
+  .dym.on { display: flex; }
+  .dym button { border: 0; cursor: pointer; background: var(--accent); color: #fff; font-weight: 800; border-radius: 999px; padding: 6px 14px; box-shadow: var(--clay-sm); }
+
+  .meter { margin-top: 18px; }
+  .meter-top { display: flex; justify-content: space-between; font-size: 13px; font-weight: 800; color: var(--ink-soft); margin-bottom: 7px; }
+  .track { height: 14px; border-radius: 999px; background: var(--surface); box-shadow: var(--pressed); overflow: hidden; }
+  .fill { height: 100%; width: 0; border-radius: 999px; background: var(--tone-ink); transition: width .9s cubic-bezier(.2,.9,.3,1); box-shadow: inset 0 2px 3px rgba(255,255,255,.35); }
+
+  .facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 18px; }
+  .fact { background: var(--surface); border-radius: var(--r-sm); padding: 10px 14px; box-shadow: var(--clay-sm); color: var(--ink); }
+  .fact b { display: block; font-size: 12px; font-weight: 800; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .6px; }
+  .fact span { font-weight: 800; }
+  .fact .warn { color: var(--coral-ink); }
+
+  .actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .ghost { border: 0; cursor: pointer; padding: 11px 18px; border-radius: 999px; background: var(--surface); color: var(--ink); font-weight: 800; box-shadow: var(--clay-sm); transition: transform .12s; }
+  .ghost:active { transform: scale(.97); box-shadow: var(--pressed); }
+
+  /* history */
+  .hist { margin-top: 34px; display: none; }
+  .hist.on { display: block; }
+  .hist h2 { font: 600 15px "Fredoka", sans-serif; color: var(--ink-soft); margin: 0 0 12px 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip { border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
+    padding: 8px 14px; border-radius: 999px; background: var(--surface); box-shadow: var(--clay-sm); font-size: 14px; font-weight: 700; }
+  .chip i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .foot { margin-top: 40px; text-align: center; font-size: 13px; color: var(--ink-soft); }
+
+  /* mode tabs */
+  .tabs { display: flex; gap: 6px; padding: 6px; margin: 0 auto 22px; width: fit-content;
+    background: var(--bg-2); border-radius: 999px; box-shadow: var(--pressed); }
+  .tab { border: 0; cursor: pointer; background: transparent; padding: 9px 18px; border-radius: 999px;
+    font-weight: 800; font-size: 14px; color: var(--ink-soft); transition: background .2s, color .2s; }
+  .tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--clay-sm); }
+
+  /* bulk */
+  .drop { display: block; text-align: center; cursor: pointer; padding: 34px 20px; border-radius: var(--r-lg);
+    background: var(--surface); box-shadow: var(--clay); transition: transform .2s, background .2s; }
+  .drop:hover { transform: translateY(-2px); }
+  .drop.over { background: color-mix(in srgb, var(--peach) 60%, var(--surface)); transform: scale(1.02); }
+  .drop:focus-within { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 4px; }
+  .drop-ic { width: 64px; height: 64px; margin: 0 auto 12px; border-radius: 22px; display: grid; place-items: center;
+    background: var(--peach); color: var(--accent); box-shadow: var(--clay-sm); }
+  .drop-ic svg { width: 30px; height: 30px; }
+  .drop strong { display: block; font: 600 19px "Fredoka", sans-serif; }
+  .drop small { color: var(--ink-soft); font-size: 14px; }
+  .linkish { border: 0; background: none; padding: 0; cursor: pointer; color: var(--accent); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+  .alt { text-align: center; font-size: 14px; color: var(--ink-soft); margin: 14px 0 0; }
+  .paste { margin-top: 16px; display: none; }
+  .paste.on { display: block; }
+  .paste textarea { width: 100%; min-height: 130px; resize: vertical; border: 0; outline: 0; padding: 16px 18px;
+    border-radius: var(--r-md); background: var(--bg-2); box-shadow: var(--pressed); font-weight: 700; font-size: 15px; }
+  .paste .go { margin-top: 10px; width: 100%; }
+
+  .panel { margin-top: 22px; border-radius: var(--r-lg); padding: 22px; background: var(--surface); box-shadow: var(--clay);
+    animation: pop .45s cubic-bezier(.3,1.4,.5,1); }
+  .panel[hidden] { display: none; }
+  .file-row { display: flex; align-items: center; gap: 12px; }
+  .file-ic { flex: none; width: 46px; height: 46px; border-radius: 16px; display: grid; place-items: center;
+    background: var(--mint); color: var(--mint-ink); box-shadow: var(--clay-sm); font: 700 12px "Fredoka"; }
+  .file-name { font-weight: 800; word-break: break-all; }
+  .file-meta { font-size: 14px; color: var(--ink-soft); }
+  .x-btn { margin-left: auto; flex: none; border: 0; cursor: pointer; width: 36px; height: 36px; border-radius: 50%;
+    background: var(--bg-2); box-shadow: var(--clay-sm); font-weight: 800; color: var(--ink-soft); }
+  .row-field { margin-top: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--ink-soft); }
+  .row-field select { border: 0; outline: 0; padding: 9px 14px; border-radius: 999px; background: var(--bg-2); box-shadow: var(--pressed); font-weight: 800; color: var(--ink); }
+  .note { margin: 14px 0 0; padding: 12px 14px; border-radius: var(--r-sm); background: var(--bg-2); font-size: 14px; color: var(--ink-soft); }
+  .note.warn { background: var(--butter); color: var(--butter-ink); font-weight: 700; }
+  .panel .go { width: 100%; margin-top: 16px; }
+
+  .prog-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .prog-top b { font: 700 22px "Fredoka", sans-serif; }
+  .prog-top span { font-size: 14px; color: var(--ink-soft); }
+  .prog { height: 18px; margin-top: 10px; border-radius: 999px; background: var(--bg-2); box-shadow: var(--pressed); overflow: hidden; }
+  .prog i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--accent); transition: width .3s ease;
+    box-shadow: inset 0 3px 4px rgba(255,255,255,.4); }
+  .tally { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+  .tal { border: 0; cursor: pointer; text-align: left; border-radius: var(--r-sm); padding: 10px 12px; box-shadow: var(--clay-sm);
+    background: var(--t); color: var(--ti); transition: transform .15s, opacity .2s; }
+  .tal b { display: block; font: 700 24px/1.1 "Fredoka", sans-serif; }
+  .tal span { font-size: 12px; font-weight: 800; }
+  .tal[aria-pressed="false"].dim { opacity: .45; }
+  .tal:active { transform: scale(.97); }
+  .row-btns { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .row-btns .go { width: auto; flex: 1 1 200px; margin: 0; }
+  .row-btns .ghost { flex: 1 1 140px; }
+
+  .table-wrap { margin-top: 18px; max-height: 360px; overflow: auto; border-radius: var(--r-sm); background: var(--bg-2); box-shadow: var(--pressed); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { position: sticky; top: 0; background: var(--bg-2); text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--ink-soft); padding: 10px 12px; }
+  td { padding: 9px 12px; border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); vertical-align: middle; }
+  td.em { overflow-wrap: anywhere; font-weight: 700; width: 34%; }
+  .hint.err:empty { min-height: 0; margin: 0; }
+  td.why { color: var(--ink-soft); }
+  .pill { display: inline-block; white-space: nowrap; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; background: var(--t); color: var(--ti); }
+  .more { text-align: center; font-size: 13px; color: var(--ink-soft); padding: 10px; }
+  @media (max-width: 440px) { .tally { grid-template-columns: 1fr 1fr; } td.why { display: none; } }
+
+  /* history */
+  .top-r { display: flex; gap: 10px; align-items: center; }
+  .hist-btn { border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 999px;
+    background: var(--surface); box-shadow: var(--clay-sm); font-weight: 800; font-size: 13px; color: var(--ink); transition: transform .15s; }
+  .hist-btn svg { width: 16px; height: 16px; }
+  .hist-btn:hover { transform: translateY(-1px); }
+  .hist-btn[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .hist-count { min-width: 20px; padding: 1px 6px; border-radius: 999px; background: var(--peach); color: var(--ink); font-size: 11px; text-align: center; }
+  .hist-btn[aria-pressed="true"] .hist-count { background: rgba(255,255,255,.3); color: #fff; }
+  .run-list { display: grid; gap: 14px; }
+  .run { border-radius: var(--r-md); padding: 16px 18px; background: var(--surface); box-shadow: var(--clay); animation: pop .35s ease; }
+  .run-head { display: flex; gap: 12px; align-items: flex-start; }
+  .run-ic { flex: none; width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; box-shadow: var(--clay-sm); }
+  .run-ic svg { width: 22px; height: 22px; }
+  .run-ic.emails { background: var(--peach); color: var(--accent); }
+  .run-ic.sites { background: #C4E4F7; color: #2C6E99; }
+  .run-name { font: 600 17px/1.25 "Fredoka", sans-serif; overflow-wrap: anywhere; }
+  .run-meta { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .run-chip { margin-left: auto; flex: none; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; white-space: nowrap; background: var(--t); color: var(--ti); }
+  .run-bar { display: flex; height: 10px; margin: 14px 0 8px; border-radius: 999px; overflow: hidden; background: var(--bg-2); box-shadow: var(--pressed); }
+  .run-bar i { display: block; height: 100%; }
+  .run-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+  .run-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .run-legend i { width: 8px; height: 8px; border-radius: 50%; }
+  .run-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .run-actions button { padding: 8px 14px; font-size: 13px; }
+  .run-actions .go { padding: 8px 16px; font-size: 13px; }
+  .run-actions .del { margin-left: auto; color: var(--coral-ink); }
+  .run-actions .del.armed { background: var(--coral); }
+  .hist-empty { text-align: center; padding: 30px 16px; color: var(--ink-soft); border-radius: var(--r-md); background: var(--bg-2); box-shadow: var(--pressed); }
+  .hist-more { display: block; margin: 16px auto 0; }
+  @media (max-width: 440px) { .hist-btn .lbl { display: none; } .run-chip { margin-left: 0; } .run-head { flex-wrap: wrap; } }
+
+
+  /* salesforce */
+  #sfRun { position: relative; width: min(980px, calc(100vw - 32px)); left: 50%; margin-left: calc(-1 * min(490px, 50vw - 16px)); }
+  .sf-conn { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .sf-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--ink-soft); box-shadow: 0 0 0 4px var(--bg-2); }
+  .sf-dot.ok { background: #3BB273; } .sf-dot.bad { background: #E0604A; } .sf-dot.wait { background: #E8B04A; }
+  .sf-conn .who { flex: 1 1 200px; min-width: 0; font-size: 14px; color: var(--ink-soft); overflow-wrap: anywhere; }
+  .sf-conn .who b { color: var(--ink); display: block; font-size: 15px; }
+  .sf-opts { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-top: 16px; font-size: 14px; color: var(--ink-soft); }
+  .sf-opts label { display: inline-flex; align-items: center; gap: 8px; }
+  .sf-opts input[type=number] { width: 78px; border: 0; outline: 0; padding: 8px 12px; border-radius: 999px; background: var(--bg-2); box-shadow: var(--pressed); font-weight: 800; color: var(--ink); }
+  .sf-opts input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
+  .sf-fetch { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .sf-fetch .go { margin: 0; width: 100%; }
+  .sf-map { display: grid; grid-template-columns: auto 1fr; gap: 10px 12px; align-items: center; margin-top: 12px; font-size: 14px; }
+  .sf-map select, .sf-map input { border: 0; outline: 0; padding: 9px 14px; border-radius: 999px; background: var(--bg-2); box-shadow: var(--pressed); font-weight: 800; color: var(--ink); min-width: 0; width: 100%; }
+  .sf-sub { font: 700 17px "Fredoka", sans-serif; margin: 22px 0 4px; }
+  .sf-push { font-size: 12px; font-weight: 800; }
+  .sf-push.ok { color: var(--mint-ink); } .sf-push.bad { color: var(--coral-ink); }
+  .sfp { margin-top: 16px; }
+  .sfp:empty { display: none; }
+  .sfp-row { display: flex; gap: 10px 14px; flex-wrap: wrap; align-items: center; margin-top: 12px; font-size: 14px; }
+  .sfp-row .go { width: auto; margin: 0; flex: 0 1 auto; padding: 12px 22px; }
+  .sfp-row .muted { flex: 1 1 220px; }
+  .sfp .note { margin-top: 12px; }
+  .sfp .sf-sub { margin-top: 16px; }
+  .sfp-list { margin: 10px 0 0; padding-left: 18px; font-size: 14px; }
+  .sfp-list li { margin-bottom: 4px; overflow-wrap: anywhere; }
+  #sfTable td.em { width: 22%; } #sfTable td.sel, #sfTable th.sel { width: 36px; }
+  .muted { color: var(--ink-soft); }
+
+  /* section switch */
+  .secs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0 0 10px; }
+  @media (max-width: 540px) { .secs { gap: 8px; } .sec { flex-direction: column; text-align: center; gap: 6px; padding: 10px 6px; } .sec small { display: none; } }
+  .sec { border: 0; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-align: left;
+    border-radius: var(--r-md); background: var(--surface); box-shadow: var(--clay-sm); transition: background .25s, transform .15s; }
+  .sec:hover { transform: translateY(-1px); }
+  .sec .ic { flex: none; width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center;
+    background: var(--bg-2); color: var(--ink-soft); box-shadow: var(--pressed); transition: background .25s, color .25s; }
+  .sec .ic svg { width: 22px; height: 22px; }
+  .sec b { display: block; font: 600 17px/1.2 "Fredoka", sans-serif; }
+  .sec small { color: var(--ink-soft); font-size: 13px; }
+  .sec[aria-pressed="true"] { background: var(--peach); box-shadow: var(--clay); }
+  .sec[aria-pressed="true"] .ic { background: var(--accent); color: #fff; box-shadow: var(--clay-sm); }
+
+  /* website result extras */
+  .chain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 16px; }
+  .hop { background: var(--surface); color: var(--ink); padding: 6px 12px; border-radius: 999px; box-shadow: var(--clay-sm);
+    font-size: 13px; font-weight: 800; overflow-wrap: anywhere; }
+  .arrow { font-weight: 800; }
+  .fix { margin-top: 14px; background: var(--mint); color: var(--mint-ink); border-radius: var(--r-sm); padding: 12px 14px;
+    box-shadow: var(--clay-sm); display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+  .fix strong { overflow-wrap: anywhere; }
+  .fix button { border: 0; cursor: pointer; background: var(--mint-ink); color: var(--mint); font-weight: 800; border-radius: 999px; padding: 6px 14px; }
+  .fact.wide { grid-column: 1 / -1; }
+  .fact span { overflow-wrap: anywhere; }
+  .fact a, td a { color: var(--accent); font-weight: 800; overflow-wrap: anywhere; }
+  a.ghost { text-decoration: none; display: inline-block; }
+  .guide { margin-top: 18px; background: var(--bg-2); border-radius: var(--r-sm); padding: 2px 16px 4px; box-shadow: var(--pressed); }
+  .guide summary { cursor: pointer; font-weight: 800; padding: 12px 0; }
+  .guide ol { margin: 0 0 10px; padding-left: 20px; font-size: 14px; color: var(--ink-soft); }
+  .guide li { margin-bottom: 8px; } .guide li b { color: var(--ink); }
+  .guide .r-advice { margin: 0 0 12px; }
+  #sTally { grid-template-columns: repeat(4, 1fr); }
+  /* results panels break out of the narrow column so the table has room */
+  #run, #sRun { position: relative; width: min(980px, calc(100vw - 32px)); left: 50%; margin-left: calc(-1 * min(490px, 50vw - 16px)); }
+  @media (max-width: 440px) { #sTally { grid-template-columns: 1fr 1fr; } }
+  #sTable td.em { width: 30%; }
+  #eTable td.em { width: 42%; }
+  #sTally .tal b { font-size: 21px; }
+
+  /* results table */
+  .dt { margin-top: 18px; }
+  .dt-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .dt-search { flex: 1 1 220px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 999px;
+    background: var(--bg-2); box-shadow: var(--pressed); color: var(--ink-soft); }
+  .dt-search:focus-within { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px; }
+  .dt-search svg { width: 18px; height: 18px; flex: none; }
+  .dt-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 11px 0; font-weight: 700; font-size: 15px; }
+  .dt-filter, .dt-size { border: 0; outline: 0; padding: 10px 14px; border-radius: 999px; background: var(--surface); box-shadow: var(--clay-sm); font-weight: 800; font-size: 14px; color: var(--ink); cursor: pointer; }
+  .dt-filter:focus-visible, .dt-size:focus-visible { outline: 3px solid var(--accent); }
+  .dt-bar .ghost { padding: 9px 14px; font-size: 14px; }
+  .dt .table-wrap { margin-top: 0; max-height: none; }
+  th { padding: 0; }
+  .dt-sort { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 6px; width: 100%; padding: 11px 12px; cursor: pointer;
+    font-size: 12px; text-transform: uppercase; letter-spacing: .6px; font-weight: 800; color: var(--ink-soft); }
+  .dt-sort:hover { color: var(--ink); }
+  .dt-sort:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; border-radius: 8px; }
+  .dt-arr { font-size: 10px; opacity: .55; }
+  th[aria-sort="ascending"] .dt-sort, th[aria-sort="descending"] .dt-sort { color: var(--accent); }
+  th[aria-sort="ascending"] .dt-arr, th[aria-sort="descending"] .dt-arr { opacity: 1; }
+  td.num { font-weight: 800; white-space: nowrap; }
+  .dt-empty { text-align: center; padding: 22px 12px; }
+  .dt-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; font-size: 13px; color: var(--ink-soft); font-weight: 700; }
+  .dt-pages { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .dt-pages button { border: 0; cursor: pointer; min-width: 34px; height: 34px; padding: 0 10px; border-radius: 12px; background: var(--surface);
+    box-shadow: var(--clay-sm); font-weight: 800; font-size: 13px; color: var(--ink); }
+  .dt-pages button[aria-current="page"] { background: var(--accent); color: #fff; }
+  .dt-pages button:disabled { opacity: .4; cursor: default; }
+  .dt-gap { padding: 0 2px; }
+  .dt-size-l { display: flex; align-items: center; gap: 8px; }
+  .dt-size { padding: 7px 10px; font-size: 13px; }
+  .li { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; max-width: 100%; }
+  .li i { flex: none; width: 18px; height: 18px; border-radius: 5px; background: #0A66C2; color: #fff; font: 800 11px/18px "Nunito"; text-align: center; font-style: normal; }
+  .li span { overflow: hidden; text-overflow: ellipsis; }
+  .muted { color: var(--ink-soft); opacity: .7; }
+  /* Apollo job check */
+  th.sel, td.sel { width: 34px; padding-left: 12px; padding-right: 0; }
+  th.sel { padding-top: 11px; }
+  .sel input { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; }
+  td.job { min-width: 190px; font-size: 13px; }
+  .jinfo { margin-top: 4px; line-height: 1.35; }
+  .jinfo a { color: var(--accent); font-weight: 800; }
+  .jinfo details { margin-top: 3px; } .jinfo summary { cursor: pointer; font-weight: 800; }
+  .jbtn { border: 0; cursor: pointer; padding: 6px 12px; border-radius: 999px; background: var(--surface); color: var(--ink); font-weight: 800; font-size: 12px; box-shadow: var(--clay-sm); white-space: nowrap; }
+  .jbtn:active { transform: scale(.97); box-shadow: var(--pressed); }
+  .jbtn:disabled { opacity: .55; cursor: progress; }
+  .jobbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; padding: 12px 14px; border-radius: var(--r-sm); background: var(--coral); color: var(--coral-ink); box-shadow: var(--clay-sm); }
+  .jobbar p { margin: 0; flex: 1 1 240px; font-weight: 700; font-size: 14px; }
+  .jobbar .ghost { padding: 9px 14px; font-size: 13px; }
+  .jobbar .go { width: auto; margin: 0; padding: 9px 16px; font-size: 13px; }
+  @media (max-width: 440px) { .dt-foot { justify-content: center; } .dt-info { width: 100%; text-align: center; } }
+
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  @media (max-width: 440px) {
+    .field { border-radius: 28px; flex-direction: column; align-items: stretch; }
+    .go { padding: 14px; }
+    .facts { grid-template-columns: 1fr 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap" id="app">
+  <div class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="23" rx="17" ry="14" fill="#FFC1B4"/><ellipse cx="20" cy="23" rx="17" ry="14" fill="url(#lg)"/><circle cx="14.5" cy="22" r="2.2" fill="#3B2F2A"/><circle cx="25.5" cy="22" r="2.2" fill="#3B2F2A"/><path d="M17 27 Q20 29.5 23 27" fill="none" stroke="#3B2F2A" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="11" cy="26" rx="2.6" ry="1.5" fill="#FF8A65" opacity=".45"/><ellipse cx="29" cy="26" rx="2.6" ry="1.5" fill="#FF8A65" opacity=".45"/><ellipse cx="14" cy="14" rx="5" ry="2.2" fill="#fff" opacity=".6" transform="rotate(-20 14 14)"/><defs><radialGradient id="lg" cx="40%" cy="30%" r="80%"><stop offset=".6" stop-opacity="0"/><stop offset="1" stop-color="#8a3a2a" stop-opacity=".25"/></radialGradient></defs></svg>
+      Mochi
+    </div>
+    <div class="top-r">
+      <button class="hist-btn" id="histBtn" aria-pressed="false" title="See all past checks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3 4v4h4"/><path d="M12 8v4.5l3 2"/></svg>
+        <span class="lbl">History</span> <span class="hist-count" id="histCount" hidden></span>
+      </button>
+      <div class="badge" id="badge" hidden></div>
+    </div>
+  </div>
+
+  <nav class="secs" aria-label="What to check">
+    <button class="sec" id="secEmail" aria-pressed="true">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span>
+      <span><b>Emails</b><small>Will it land?</small></span>
+    </button>
+    <button class="sec" id="secSite" aria-pressed="false">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></span>
+      <span><b>Websites</b><small>Is it still alive?</small></span>
+    </button>
+    <button class="sec" id="secSf" aria-pressed="false">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A5.5 5.5 0 0 1 17 8.5a4.5 4.5 0 0 1 .5 9.5H7z"/><path d="M9.5 13.5l2 2 3.5-4"/></svg></span>
+      <span><b>Salesforce</b><small>Re-verify old ones</small></span>
+    </button>
+  </nav>
+
+  <section class="hero">
+    <svg class="mascot" viewBox="0 0 150 130" aria-hidden="true">
+      <ellipse cx="75" cy="124" rx="44" ry="5" fill="rgba(90,60,40,.15)" />
+      <!-- little moon orbits behind the planet (websites only) -->
+      <g id="moonWrap" transform="translate(75 74)" style="display:none">
+        <circle r="7" fill="#FFE2A1" stroke="rgba(120,80,20,.15)" stroke-width="1.5">
+          <animateMotion id="moonOrbit" dur="9s" repeatCount="indefinite" path="M -66 0 A 66 24 0 1 0 66 0 A 66 24 0 1 0 -66 0" />
+        </circle>
+      </g>
+      <g class="wob">
+        <!-- envelope buddy (emails) -->
+        <g id="bodyMail">
+          <rect class="body" id="mBody" x="18" y="22" width="114" height="92" rx="30" fill="#FFD7C2" />
+          <rect x="18" y="22" width="114" height="92" rx="30" fill="url(#shade)" />
+          <path d="M30 34 Q75 78 120 34" fill="none" stroke="rgba(90,50,30,.18)" stroke-width="5" stroke-linecap="round" />
+          <ellipse cx="44" cy="34" rx="16" ry="7" fill="rgba(255,255,255,.55)" transform="rotate(-18 44 34)" />
+        </g>
+        <!-- planet buddy (websites) -->
+        <g id="bodyGlobe" style="display:none">
+          <g class="sprout">
+            <path d="M75 30 Q74 22 76 15" fill="none" stroke="#5BA67A" stroke-width="4" stroke-linecap="round" />
+            <path d="M76 17 Q86 6 96 12 Q88 22 76 17z" fill="#7CC79A" />
+            <path d="M75 20 Q66 10 57 15 Q64 24 75 20z" fill="#94D4AE" />
+          </g>
+          <circle class="body" id="gBody" cx="75" cy="72" r="46" fill="#C4E4F7" />
+          <path d="M40 52 Q48 40 60 44 Q66 52 56 58 Q46 62 40 52z" fill="rgba(40,90,120,.12)" />
+          <path d="M98 98 Q108 90 116 94 Q114 106 104 110 Q96 108 98 98z" fill="rgba(40,90,120,.12)" />
+          <path d="M104 40 Q112 44 114 52 Q108 54 103 48z" fill="rgba(40,90,120,.10)" />
+          <circle cx="75" cy="72" r="46" fill="url(#shadeC)" />
+          <ellipse cx="54" cy="40" rx="13" ry="6" fill="rgba(255,255,255,.6)" transform="rotate(-28 54 40)" />
+        </g>
+        <!-- cheeks -->
+        <ellipse cx="42" cy="86" rx="9" ry="5" fill="#FF9E86" opacity=".55" />
+        <ellipse cx="108" cy="86" rx="9" ry="5" fill="#FF9E86" opacity=".55" />
+        <!-- eyes -->
+        <g class="eyes-dot">
+          <ellipse cx="56" cy="72" rx="8" ry="9" fill="#fff" />
+          <ellipse cx="94" cy="72" rx="8" ry="9" fill="#fff" />
+          <g class="pupils" fill="#3B2F2A">
+            <circle cx="57" cy="73" r="4.6" /><circle cx="95" cy="73" r="4.6" />
+            <circle cx="58.5" cy="71" r="1.4" fill="#fff" /><circle cx="96.5" cy="71" r="1.4" fill="#fff" />
+          </g>
+        </g>
+        <g class="eyes-happy" fill="none" stroke="#3B2F2A" stroke-width="4.5" stroke-linecap="round">
+          <path d="M48 75 Q56 65 64 75" /><path d="M86 75 Q94 65 102 75" />
+        </g>
+        <g class="brows" fill="none" stroke="#3B2F2A" stroke-width="3.5" stroke-linecap="round">
+          <path d="M47 63 L62 58" /><path d="M103 63 L88 58" />
+        </g>
+        <path id="mMouth" d="M66 92 Q75 98 84 92" fill="none" stroke="#3B2F2A" stroke-width="4" stroke-linecap="round" />
+        <path class="sweat" d="M122 52 q6 9 0 13 q-6 -4 0 -13z" fill="#8EC9F0" />
+      </g>
+      <text class="q" x="128" y="24" font-family="Fredoka" font-weight="700" font-size="26" fill="#6E5FC7">?</text>
+      <defs>
+        <radialGradient id="shadeC" cx="35%" cy="30%" r="75%">
+          <stop offset="0" stop-color="#fff" stop-opacity=".3" />
+          <stop offset=".65" stop-color="#000" stop-opacity="0" />
+          <stop offset="1" stop-color="#1f3d55" stop-opacity=".25" />
+        </radialGradient>
+        <radialGradient id="shade" cx="35%" cy="25%" r="85%">
+          <stop offset="0" stop-color="#fff" stop-opacity=".25" />
+          <stop offset=".7" stop-color="#000" stop-opacity="0" />
+          <stop offset="1" stop-color="#5a3420" stop-opacity=".22" />
+        </radialGradient>
+      </defs>
+    </svg>
+    <h1 id="headline">Will this email land?</h1>
+    <p class="sub" id="subline">Paste an address and Mochi will knock on the mail server to see if anyone's home.</p>
+  </section>
+
+  <div id="emailsec">
+  <div class="tabs" role="tablist" aria-label="Check mode">
+    <button class="tab" role="tab" id="tabOne" aria-selected="true" aria-controls="single">One email</button>
+    <button class="tab" role="tab" id="tabBulk" aria-selected="false" aria-controls="bulk">A whole list</button>
+  </div>
+
+  <div id="single" role="tabpanel" aria-labelledby="tabOne">
+  <form id="form" novalidate>
+    <label for="email" class="sr">Email address</label>
+    <div class="field">
+      <input id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false"
+             placeholder="name@company.com" aria-describedby="hint" autofocus />
+      <button class="go" id="go" type="submit">Check it</button>
+    </div>
+    <p class="hint" id="hint">Press <kbd>Enter</kbd> to check</p>
+  </form>
+
+  <div class="loading" id="loading" role="status" aria-live="polite">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div id="loadMsg">Knocking on the mail server…</div>
+  </div>
+
+  <section class="result" id="result" aria-live="polite" tabindex="-1">
+    <div class="r-head">
+      <div class="r-icon" id="rIcon"></div>
+      <div>
+        <h2 class="r-title" id="rTitle"></h2>
+        <div class="r-email" id="rEmail"></div>
+      </div>
+    </div>
+    <p class="r-why" id="rWhy"></p>
+    <p class="r-advice" id="rAdvice"></p>
+    <div class="dym" id="dym"><span>Did you mean <strong id="dymText"></strong>?</span><button type="button" id="dymBtn">Check that instead</button></div>
+    <div class="meter" id="meter">
+      <div class="meter-top"><span>Deliverability score</span><span id="score">–</span></div>
+      <div class="track"><div class="fill" id="fill"></div></div>
+    </div>
+    <div class="facts" id="facts"></div>
+    <div class="actions">
+      <button class="ghost" type="button" id="again">Check another</button>
+      <button class="ghost" type="button" id="copy">Copy result</button>
+    </div>
+    <div class="sfp" id="sfOne"></div>
+  </section>
+
+  <section class="hist" id="hist">
+    <h2>Checked this session</h2>
+    <div class="chips" id="chips"></div>
+  </section>
+  </div>
+
+  <div id="bulk" role="tabpanel" aria-labelledby="tabBulk" hidden>
+    <div id="pick">
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept=".csv,text/csv,.txt" class="sr" />
+        <div class="drop-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></div>
+        <strong>Drop your CSV here</strong>
+        <small>or click to choose a file · we'll find the email column for you</small>
+      </label>
+      <p class="alt">No file? <button class="linkish" type="button" id="pasteToggle">Paste a list instead</button> · <button class="linkish" type="button" id="sample">Get a sample CSV</button></p>
+      <div class="paste" id="paste">
+        <label for="pasteBox" class="sr">Emails, one per line</label>
+        <textarea id="pasteBox" placeholder="one@company.com&#10;two@company.com&#10;…or separated by commas"></textarea>
+        <button class="go" type="button" id="pasteGo">Use these emails</button>
+      </div>
+      <p class="hint err" id="bulkErr" role="alert"></p>
+    </div>
+
+    <!-- step 2: review -->
+    <section class="panel" id="review" hidden>
+      <div class="file-row">
+        <div class="file-ic">CSV</div>
+        <div><div class="file-name" id="fName"></div><div class="file-meta" id="fMeta"></div></div>
+        <button class="x-btn" type="button" id="reset" aria-label="Choose a different file">✕</button>
+      </div>
+      <div class="row-field" id="colRow">
+        <label for="col">Email column</label>
+        <select id="col"></select>
+      </div>
+      <p class="note" id="summary"></p>
+      <button class="go" type="button" id="start">Check emails</button>
+    </section>
+
+    <!-- step 3: progress + results -->
+    <section class="panel" id="run" hidden>
+      <div class="prog-top"><b id="pTitle">Checking…</b><span id="pCount"></span></div>
+      <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="pBar"><i id="pFill"></i></div>
+      <div class="tally" id="tally"></div>
+      <p class="hint err" id="runErr" role="alert"></p>
+      <div class="row-btns" id="runBtns"></div>
+      <div class="sfp" id="sfBulk" hidden></div>
+      <div class="jobbar" id="jobBar" hidden></div>
+      <div id="eTable" hidden></div>
+    </section>
+  </div>
+
+  </div><!-- /emailsec -->
+
+  <!-- ============ WEBSITES ============ -->
+  <div id="sitesec" hidden>
+    <div class="tabs" role="tablist" aria-label="Website check mode" id="sTabs">
+      <button class="tab" role="tab" id="sTabOne" aria-selected="true" aria-controls="sSingle">One website</button>
+      <button class="tab" role="tab" id="sTabBulk" aria-selected="false" aria-controls="sBulk">A whole list</button>
+    </div>
+
+    <div id="sSingle" role="tabpanel" aria-labelledby="sTabOne">
+      <form id="sForm" novalidate>
+        <label for="sInput" class="sr">Website address</label>
+        <div class="field">
+          <input id="sInput" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false"
+                 placeholder="example.com" aria-describedby="sHint" />
+          <button class="go" id="sGo" type="submit">Check it</button>
+        </div>
+        <p class="hint" id="sHint">A bare domain or a full link both work · <kbd>Enter</kbd> to check</p>
+      </form>
+
+      <div class="loading" id="sLoading" role="status" aria-live="polite">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div id="sLoadMsg">Visiting the site…</div>
+      </div>
+
+      <section class="result" id="sResult" aria-live="polite" tabindex="-1">
+        <div class="r-head">
+          <div class="r-icon" id="sIcon"></div>
+          <div>
+            <h2 class="r-title" id="sTitle"></h2>
+            <div class="r-email" id="sUrl"></div>
+          </div>
+        </div>
+        <p class="r-why" id="sWhy"></p>
+        <p class="r-advice" id="sAdvice"></p>
+        <div class="fix" id="sFix" hidden></div>
+        <div class="chain" id="sChain" hidden></div>
+        <div class="facts" id="sFacts"></div>
+        <div class="actions">
+          <button class="ghost" type="button" id="sAgain">Check another</button>
+          <a class="ghost" id="sOpen" target="_blank" rel="noopener">Open site ↗</a>
+          <button class="ghost" type="button" id="sCopy">Copy result</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="sBulk" role="tabpanel" aria-labelledby="sTabBulk" hidden>
+      <div id="sPick">
+        <label class="drop" id="sDrop">
+          <input type="file" id="sFile" accept=".csv,text/csv,.txt" class="sr" />
+          <div class="drop-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></div>
+          <strong>Drop your CSV or text file here</strong>
+          <small>one website per line works too · we'll find the website column for you</small>
+        </label>
+        <p class="alt">No file? <button class="linkish" type="button" id="sPasteToggle">Paste a list instead</button> · <button class="linkish" type="button" id="sSample">Get a sample CSV</button></p>
+        <div class="paste" id="sPaste">
+          <label for="sPasteBox" class="sr">Websites, one per line</label>
+          <textarea id="sPasteBox" placeholder="example.com&#10;https://www.another-site.org&#10;…one per line"></textarea>
+          <button class="go" type="button" id="sPasteGo">Use these websites</button>
+        </div>
+        <p class="hint err" id="sBulkErr" role="alert"></p>
+      </div>
+
+      <section class="panel" id="sReview" hidden>
+        <div class="file-row">
+          <div class="file-ic">CSV</div>
+          <div><div class="file-name" id="sFName"></div><div class="file-meta" id="sFMeta"></div></div>
+          <button class="x-btn" type="button" id="sReset" aria-label="Choose a different file">✕</button>
+        </div>
+        <div class="row-field" id="sColRow">
+          <label for="sCol">Website column</label>
+          <select id="sCol"></select>
+        </div>
+        <p class="note" id="sSummary"></p>
+        <button class="go" type="button" id="sStart">Check websites</button>
+      </section>
+
+      <section class="panel" id="sRun" hidden>
+        <div class="prog-top"><b id="sPTitle">Checking…</b><span id="sPCount"></span></div>
+        <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="sPBar"><i id="sPFill"></i></div>
+        <div class="tally" id="sTally"></div>
+        <p class="hint err" id="sRunErr" role="alert"></p>
+        <div class="row-btns" id="sRunBtns"></div>
+        <details class="guide" id="sGuide" hidden>
+          <summary>How to fix the broken ones</summary>
+          <ol>
+            <li><b>Use "Fix found" first.</b> Those sites work under another version of the address — just update your list.</li>
+            <li><b>Review "Other domain".</b> Compare the final address and page title. Same organisation (rebrand or new domain)? Use the new URL. Unrelated? The domain was probably sold or hijacked.</li>
+            <li><b>Look up Dead, Parked and Placeholder.</b> Open the archive snapshot to see the old site and the organisation's name, then search that name — their LinkedIn or Facebook page usually lists the current website.</li>
+            <li><b>Fix the leftovers by hand.</b> What's left is normally a short list for a person to check.</li>
+          </ol>
+          <p class="r-advice">“OK” means the site loads, not that it's the right content. Titles that don't match what you expect are a quick way to spot domains that now belong to someone else.</p>
+        </details>
+        <div id="sTable" hidden></div>
+      </section>
+    </div>
+  </div><!-- /sitesec -->
+
+  <!-- ============ HISTORY ============ -->
+  <!-- ============ SALESFORCE ============ -->
+  <div id="sfsec" hidden>
+    <section class="panel" id="sfConnP">
+      <div class="sf-conn">
+        <i class="sf-dot wait" id="sfDot" aria-hidden="true"></i>
+        <div class="who" id="sfWho" aria-live="polite"><b>Checking the Salesforce connection…</b></div>
+        <div class="row-btns" id="sfConnBtns" style="margin:0"></div>
+      </div>
+      <p class="note warn" id="sfConnErr" hidden></p>
+      <div class="sf-opts">
+        <label>Verified more than <input type="number" id="sfMonths" min="1" max="120" value="8" /> months ago</label>
+        <label><input type="checkbox" id="sfBlank" checked /> Include never verified</label>
+        <label>Max records <input type="number" id="sfLimit" min="0" placeholder="All" title="Handy for a small test run first" /></label>
+      </div>
+      <div class="sf-fetch">
+        <button class="go" type="button" id="sfLeads">Fetch Leads</button>
+        <button class="go" type="button" id="sfContacts">Fetch Contacts</button>
+      </div>
+      <p class="hint err" id="sfErr" role="alert"></p>
+    </section>
+
+    <section class="panel" id="sfRun" hidden>
+      <div class="prog-top"><b id="sfTitle"></b><span id="sfCount"></span></div>
+      <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="sfBar"><i id="sfFill"></i></div>
+      <p class="note" id="sfSummary"></p>
+      <div class="tally" id="sfTally"></div>
+      <p class="hint err" id="sfRunErr" role="alert"></p>
+      <div id="sfMapWrap" hidden>
+        <h3 class="sf-sub">What Mochi will write back</h3>
+        <p class="note" id="sfMapNote"></p>
+        <div class="sf-map" id="sfMap"></div>
+      </div>
+      <div class="row-btns" id="sfBtns"></div>
+      <div id="sfTable" style="margin-top:18px"></div>
+    </section>
+  </div>
+
+  <div id="histsec" hidden>
+    <div class="dt-bar hist-bar">
+      <label class="dt-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        <input type="search" id="hSearch" placeholder="Search by file name…" aria-label="Search past runs" />
+      </label>
+      <select class="dt-filter" id="hType" aria-label="Show">
+        <option value="">Everything</option>
+        <option value="emails">Emails</option>
+        <option value="sites">Websites</option>
+        <option value="list">Lists only</option>
+        <option value="single">Single checks only</option>
+        <option value="unfinished">Unfinished lists</option>
+      </select>
+    </div>
+    <p class="hint err" id="hMsg" role="alert"></p>
+    <div id="runList" class="run-list"></div>
+    <button class="ghost hist-more" id="hMore" hidden>Show more</button>
+  </div>
+
+  <p class="foot" id="foot">Powered by the Bouncer verification API</p>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const app = $("app"), form = $("form"), input = $("email"), go = $("go"), hint = $("hint");
+
+const ICONS = {
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  warn:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 7v6"/><circle cx="12" cy="17.5" r=".6" fill="currentColor"/></svg>',
+  x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg>',
+  q:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M9.2 9a3 3 0 1 1 4.3 2.7c-.9.5-1.5 1.1-1.5 2.1"/><circle cx="12" cy="17.6" r=".6" fill="currentColor"/></svg>',
+};
+
+const STATUS = {
+  safe:  { title: "Safe",        tone: "mint",   mood: "happy",    icon: "check", body: "#BDE8CF", mouth: "M60 90 Q75 106 90 90",
+           advice: "Safe to send. This inbox is real and accepting mail." },
+  risk:  { title: "Bounce Risk", tone: "butter", mood: "worried",  icon: "warn",  body: "#FFE2A1", mouth: "M64 95 Q69 91 75 95 Q81 99 86 95",
+           advice: "It might work, but it could bounce or hurt your sender reputation. Send only if you know this contact." },
+  dead:  { title: "Dead",        tone: "coral",  mood: "sad",      icon: "x",     body: "#FFC1B4", mouth: "M64 99 Q75 89 86 99",
+           advice: "Don't send to this address — it will bounce. Remove it from your list." },
+  // not a result - only used for Mochi's "confused" face on input errors
+  unknown: { title: "Bounce Risk", tone: "lilac", mood: "confused", icon: "q", body: "#DAD3F6", mouth: "M67 95 L83 93", advice: "" },
+};
+// older saved runs used Bouncer's raw words
+const LEGACY = { deliverable: "safe", risky: "risk", undeliverable: "dead", unknown: "risk" };
+const normE = r => { if (r && !STATUS[r.status] || r?.status === "unknown") { r.bouncerStatus ??= r.status; r.status = LEGACY[r.status] || "risk"; } return r; };
+
+const REASONS = {
+  accepted_email: "The mail server confirmed this mailbox exists.",
+  low_deliverability: "The mailbox seems to exist, but delivery may be unreliable.",
+  low_quality: "The address works, but it's low quality — like a shared, role or throwaway inbox.",
+  invalid_email: "The address isn't written in a valid format.",
+  invalid_domain: "This domain doesn't exist or can't receive email.",
+  rejected_email: "The mail server says this mailbox doesn't exist.",
+  dns_error: "We couldn't look up this domain's mail records.",
+  unavailable_smtp: "The mail server didn't answer our knock.",
+  unsupported: "This email provider doesn't allow verification.",
+  timeout: "The mail server took too long to respond.",
+  unknown: "Something unexpected happened during the check.",
+  no_mail_server: "This domain has no mail server, so nothing can be delivered here.",
+  unverified: "Bouncer tried several times but the mail server never confirmed the mailbox. The domain does accept mail, so it may work — but it could bounce.",
+};
+
+const LOADING = ["Knocking on the mail server…", "Waiting for someone to answer…", "Some servers are slow — hang tight…", "No clear answer yet — trying again…", "Giving it more time (can take up to a minute)…"];
+
+const history = [];
+let current = null, loadTimer = null;
+
+var curSection = "emails";
+const IDLE = { emails: "#FFD7C2", sites: "#C4E4F7", history: "#FFD7C2", salesforce: "#FFD7C2" };
+function mood(m, bodyColor, mouth) {
+  app.className = "wrap " + (m || "");
+  const fill = !bodyColor || bodyColor === "#FFD7C2" ? IDLE[curSection] : bodyColor;
+  $("mBody").setAttribute("fill", fill);
+  $("gBody").setAttribute("fill", fill);
+  const orbit = $("moonOrbit"), dur = m === "thinking" ? "1.8s" : "9s";
+  if (orbit && orbit.getAttribute("dur") !== dur) orbit.setAttribute("dur", dur);
+  $("mMouth").setAttribute("d", mouth || "M66 92 Q75 98 84 92");
+}
+
+function setHint(text, isErr) {
+  hint.className = "hint" + (isErr ? " err" : "");
+  hint.innerHTML = text;
+}
+
+const looksLikeEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+
+input.addEventListener("input", () => {
+  if (hint.classList.contains("err")) setHint('Press <kbd>Enter</kbd> to check');
+  if (!go.disabled) mood(input.value ? "typing" : "");
+});
+
+form.addEventListener("submit", e => { e.preventDefault(); check(input.value); });
+
+async function check(raw) {
+  const email = raw.trim().replace(/^mailto:/i, "");
+  input.value = email;
+  if (!email) { setHint("Type an email address first.", true); mood("confused", STATUS.unknown.body, STATUS.unknown.mouth); input.focus(); return; }
+  if (!looksLikeEmail(email)) { setHint("That doesn't look like an email yet — it needs a name, an @ and a domain.", true); mood("confused", STATUS.unknown.body, STATUS.unknown.mouth); input.focus(); return; }
+
+  $("result").classList.remove("on");
+  setHint("&nbsp;");
+  go.disabled = true; go.textContent = "Checking…";
+  mood("thinking", "#FFD7C2", "M70 94 Q75 97 80 94");
+  $("loading").classList.add("on");
+  let i = 0; $("loadMsg").textContent = LOADING[0];
+  loadTimer = setInterval(() => { i = Math.min(i + 1, LOADING.length - 1); $("loadMsg").textContent = LOADING[i]; }, 4000);
+
+  try {
+    const r = await fetch("/api/verify?email=" + encodeURIComponent(email));
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || "Something went wrong. Please try again.");
+    show(data);
+    saveSingle("emails", String(data.email || email).toLowerCase(), data);
+    addHistory(data);
+  } catch (err) {
+    mood("worried", STATUS.risk.body, STATUS.risk.mouth);
+    setHint(err.message === "Failed to fetch" ? "Can't reach the app server. Is it still running?" : err.message, true);
+  } finally {
+    clearInterval(loadTimer);
+    $("loading").classList.remove("on");
+    go.disabled = false; go.textContent = "Check it";
+  }
+}
+
+const yes = v => v === "yes" || v === true;
+
+function show(d) {
+  current = normE(d);
+  try { sfOne.reset(); } catch {}
+  const s = STATUS[d.status] || STATUS.risk;
+  mood(s.mood, s.body, s.mouth);
+  const res = $("result");
+  res.style.setProperty("--tone", `var(--${s.tone})`);
+  res.style.setProperty("--tone-ink", `var(--${s.tone}-ink)`);
+  $("rIcon").innerHTML = ICONS[s.icon];
+  $("rTitle").textContent = s.title;
+  $("rEmail").textContent = d.email;
+  $("rWhy").textContent = REASONS[d.reason] || REASONS.unknown;
+  $("rAdvice").textContent = s.advice + (d.tries > 1 ? ` (Checked ${d.tries} times to get a clear answer.)` : "");
+
+  if (d.didYouMean) { $("dymText").textContent = d.didYouMean; $("dym").classList.add("on"); }
+  else $("dym").classList.remove("on");
+
+  const score = typeof d.score === "number" ? d.score : null;
+  $("meter").hidden = score === null;
+  $("score").textContent = score === null ? "–" : `${score} / 100`;
+  $("fill").style.width = "0";
+  requestAnimationFrame(() => requestAnimationFrame(() => { $("fill").style.width = (score ?? 0) + "%"; }));
+
+  const dm = d.domain || {}, ac = d.account || {};
+  const facts = [
+    ["Inbox type", yes(dm.free) ? "Free provider" : dm.free === "no" ? "Business" : "—"],
+    ["Provider", d.provider || dm.name || "—"],
+    ["Disposable", yes(dm.disposable) ? "Yes" : "No", yes(dm.disposable)],
+    ["Role inbox", yes(ac.role) ? "Yes (shared)" : "No", yes(ac.role)],
+    ["Catch-all domain", yes(dm.acceptAll) ? "Yes" : dm.acceptAll === "unknown" ? "Unknown" : "No", yes(dm.acceptAll)],
+    ["Mailbox full", yes(ac.fullMailbox) ? "Yes" : "No", yes(ac.fullMailbox)],
+  ];
+  $("facts").innerHTML = facts.map(([k, v, w]) =>
+    `<div class="fact"><b>${k}</b><span class="${w ? "warn" : ""}">${esc(v)}</span></div>`).join("");
+
+  res.classList.add("on");
+  res.focus({ preventScroll: true });
+  res.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function addHistory(d) {
+  const idx = history.findIndex(h => h.email.toLowerCase() === d.email.toLowerCase());
+  if (idx > -1) history.splice(idx, 1);
+  history.unshift(d);
+  history.length = Math.min(history.length, 8);
+  $("hist").classList.toggle("on", history.length > 1);
+  $("chips").innerHTML = history.map((h, i) => {
+    const s = STATUS[h.status] || STATUS.risk;
+    return `<button class="chip" data-i="${i}" title="${esc(h.email)} — ${s.title}"><i style="background:var(--${s.tone}-ink)"></i><span>${esc(h.email)}</span></button>`;
+  }).join("");
+}
+
+$("chips").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  const d = history[+b.dataset.i]; input.value = d.email; show(d);
+});
+
+$("dymBtn").addEventListener("click", () => check(current.didYouMean));
+$("again").addEventListener("click", () => {
+  $("result").classList.remove("on"); input.value = ""; mood(""); input.focus();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+$("copy").addEventListener("click", async () => {
+  if (!current) return;
+  const s = STATUS[current.status] || STATUS.risk;
+  const text = `${current.email} — ${s.title} (${current.bouncerStatus || current.status}${current.reason ? ", " + current.reason : ""})${current.score != null ? ", score " + current.score : ""}`;
+  try { await navigator.clipboard.writeText(text); $("copy").textContent = "Copied!"; }
+  catch { $("copy").textContent = "Couldn't copy"; }
+  setTimeout(() => $("copy").textContent = "Copy result", 1600);
+});
+
+// Esc clears the field
+input.addEventListener("keydown", e => { if (e.key === "Escape") { input.value = ""; mood(""); } });
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+// ================= RESULTS TABLE (search · filter · sort · pagination) =================
+function DataTable(el, cfg) {
+  const st = { q: "", filter: "", sort: null, dir: 1, page: 1, size: 25 };
+  let rows = [], running = false, qTimer;
+  el.classList.add("dt");
+  el.innerHTML = `
+    <div class="dt-bar">
+      <label class="dt-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        <input type="search" placeholder="${esc(cfg.placeholder || "Search…")}" aria-label="Search results" />
+      </label>
+      <select class="dt-filter" aria-label="Filter results">
+        <option value="">All results</option>
+        ${cfg.filters.map(f => `<option value="${f.value}">${esc(f.label)}</option>`).join("")}
+      </select>
+      <button type="button" class="ghost dt-clear" hidden>Clear</button>
+      <button type="button" class="ghost dt-dl" hidden>Download this view</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr>${cfg.columns.map(c => c.head != null ? `<th class="${c.cls || ""}">${c.head}</th>` : `<th aria-sort="none" class="${c.cls || ""}"><button type="button" class="dt-sort" data-k="${c.key}">${esc(c.label)}<span class="dt-arr" aria-hidden="true"></span></button></th>`).join("")}</tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="dt-foot">
+      <span class="dt-info" aria-live="polite"></span>
+      <nav class="dt-pages" aria-label="Pages"></nav>
+      <label class="dt-size-l">Rows <select class="dt-size" aria-label="Rows per page">${[10, 25, 50, 100].map(n => `<option ${n === st.size ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+    </div>`;
+  const q = sel => el.querySelector(sel);
+  const search = q(".dt-search input"), fsel = q(".dt-filter"), tbody = q("tbody");
+
+  search.addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { st.q = search.value.trim().toLowerCase(); st.page = 1; draw(); }, 150); });
+  search.addEventListener("keydown", e => { if (e.key === "Escape") { search.value = ""; st.q = ""; draw(); } });
+  fsel.addEventListener("change", () => api.setFilter(fsel.value));
+  q(".dt-size").addEventListener("change", e => { st.size = +e.target.value; st.page = 1; draw(); });
+  q(".dt-clear").addEventListener("click", () => { search.value = ""; st.q = ""; api.setFilter(""); });
+  q(".dt-dl").addEventListener("click", () => cfg.onExportView?.(view()));
+  q("thead").addEventListener("click", e => {
+    const b = e.target.closest(".dt-sort"); if (!b) return;
+    const k = b.dataset.k;
+    if (st.sort !== k) { st.sort = k; st.dir = 1; } else if (st.dir === 1) st.dir = -1; else { st.sort = null; st.dir = 1; }
+    st.page = 1; draw();
+  });
+  q(".dt-pages").addEventListener("click", e => {
+    const b = e.target.closest("button[data-p]"); if (!b || b.disabled) return;
+    st.page = +b.dataset.p; draw();
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
+  const empty = v => v === "" || v == null;
+  function cmp(a, b) {
+    if (empty(a) && empty(b)) return 0;
+    if (empty(a)) return 1; if (empty(b)) return -1;   // blanks always last
+    if (typeof a === "number" && typeof b === "number") return (a - b) * st.dir;
+    return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" }) * st.dir;
+  }
+  function view() {
+    let v = rows;
+    if (st.filter) { const f = cfg.filters.find(x => x.value === st.filter); if (f) v = v.filter(f.test); }
+    if (st.q) v = v.filter(r => cfg.text(r).toLowerCase().includes(st.q));
+    if (st.sort) { const c = cfg.columns.find(x => x.key === st.sort); v = [...v].sort((a, b) => cmp(c.value(a), c.value(b))); }
+    return v;
+  }
+  function pageButtons(page, pages) {
+    const nums = new Set([1, pages, page - 1, page, page + 1].filter(n => n >= 1 && n <= pages));
+    const list = [...nums].sort((a, b) => a - b);
+    let out = `<button type="button" data-p="${page - 1}" ${page <= 1 ? "disabled" : ""} aria-label="Previous page">‹</button>`;
+    list.forEach((n, i) => {
+      if (i && n - list[i - 1] > 1) out += `<span class="dt-gap">…</span>`;
+      out += `<button type="button" data-p="${n}" ${n === page ? 'aria-current="page"' : ""}>${n}</button>`;
+    });
+    return out + `<button type="button" data-p="${page + 1}" ${page >= pages ? "disabled" : ""} aria-label="Next page">›</button>`;
+  }
+  function draw() {
+    const v = view(), n = v.length;
+    const pages = Math.max(1, Math.ceil(n / st.size));
+    st.page = Math.min(Math.max(1, st.page), pages);
+    const start = (st.page - 1) * st.size, slice = v.slice(start, start + st.size);
+    tbody.innerHTML = slice.map(r => `<tr>${cfg.columns.map(c => `<td class="${c.cls || ""}">${c.html(r)}</td>`).join("")}</tr>`).join("")
+      || `<tr><td colspan="${cfg.columns.length}" class="why dt-empty">${!rows.length ? (running ? "Results will appear here as they come in…" : "No results yet.") : "Nothing matches — try a different search or filter."}</td></tr>`;
+    const filtered = st.q || st.filter;
+    q(".dt-info").textContent = n ? `${(start + 1).toLocaleString()}–${(start + slice.length).toLocaleString()} of ${n.toLocaleString()}${filtered ? ` (filtered from ${rows.length.toLocaleString()})` : ""}` : (filtered ? `0 of ${rows.length.toLocaleString()}` : "");
+    q(".dt-pages").innerHTML = pages > 1 ? pageButtons(st.page, pages) : "";
+    q(".dt-clear").hidden = !filtered;
+    q(".dt-dl").hidden = !filtered || running || !n || !cfg.onExportView;
+    el.querySelectorAll("th").forEach((th, i) => {
+      if (!th.querySelector(".dt-arr")) return;
+      const k = cfg.columns[i].key, on = st.sort === k;
+      th.setAttribute("aria-sort", on ? (st.dir === 1 ? "ascending" : "descending") : "none");
+      th.querySelector(".dt-arr").textContent = on ? (st.dir === 1 ? "▲" : "▼") : "↕";
+    });
+    cfg.onDraw?.(v);
+  }
+  const api = {
+    state: st, view,
+    set(list, isRunning) { rows = list; running = !!isRunning; draw(); },
+    setFilter(v) { st.filter = v || ""; fsel.value = st.filter; st.page = 1; draw(); cfg.onFilter?.(st.filter); },
+    reset() { st.q = ""; st.filter = ""; st.sort = null; st.dir = 1; st.page = 1; search.value = ""; fsel.value = ""; rows = []; draw(); },
+  };
+  draw();
+  return api;
+}
+
+// ================= SAVING RUNS =================
+const postJSON = (url, body) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+async function runCreate(type, job) {
+  if (job.runId) return;
+  try {
+    const r = await postJSON("/api/runs", { type, name: job.name, total: job.unique.length,
+      input: { headers: job.headers, data: job.data, col: job.col, delim: job.delim } });
+    if (!r.ok) throw 0;
+    job.runId = (await r.json()).id; job.saveState = "saved"; refreshHistCount();
+  } catch { job.saveState = "error"; }
+}
+async function runFlush(job, status) {
+  if (!job.runId) return;
+  if (job.flushing) { job.flushAgain = status || job.flushAgain || true; return; }
+  const batch = job.pending.splice(0);
+  if (!batch.length && !status) return;
+  job.flushing = true;
+  try {
+    const r = await postJSON(`/api/runs/${job.runId}/results`, { results: batch, status });
+    if (!r.ok) throw 0;
+    job.saveState = "saved";
+  } catch { job.pending.unshift(...batch); job.saveState = "error"; }
+  job.flushing = false;
+  if (job.flushAgain) { const st = typeof job.flushAgain === "string" ? job.flushAgain : undefined; job.flushAgain = false; await runFlush(job, st); }
+}
+const saveLabel = job => !job.runId ? (job.saveState === "error" ? " · Not saved — is the app server running?" : "")
+  : job.saveState === "error" ? " · Couldn't save, retrying…" : " · Saved to History";
+function saveSingle(type, key, result) { postJSON("/api/singles", { type, key, result }).then(refreshHistCount).catch(() => {}); }
+
+// ================= BULK (CSV) =================
+const COPY = {
+  one:  ["Will this email land?", "Paste an address and Mochi will knock on the mail server to see if anyone's home."],
+  bulk: ["Check a whole list", "Drop in a CSV. Mochi checks every address and hands the file back with the results added."],
+};
+const CONCURRENCY = 4;
+const ORDER = ["safe", "risk", "dead"];
+const SHORT = { safe: "Safe", risk: "Bounce Risk", dead: "Dead" };
+let credits = null, isDemo = false;
+let B = null;          // current bulk job
+let filter = null;     // status filter for the table
+const whyE = r => r._error || r._note && REASONS[r.reason] || (r.didYouMean ? `Did you mean ${r.didYouMean}?` : REASONS[r.reason] || "");
+const ePill = r => { const s = STATUS[r.status] || STATUS.risk; return `<span class="pill" style="--t:var(--${s.tone});--ti:var(--${s.tone}-ink)">${SHORT[r.status] || "Bounce Risk"}</span>`; };
+const eTbl = DataTable($("eTable"), {
+  placeholder: "Search emails, reasons, providers…",
+  columns: [
+    { key: "sel", head: '<input type="checkbox" class="jall" aria-label="Select all emails in this view" title="Select all emails in this view (all pages)">', cls: "sel",
+      value: () => "", html: r => `<input type="checkbox" class="jsel" data-e="${esc(r.email.toLowerCase())}" aria-label="Select ${esc(r.email)}" ${jSel.has(r.email.toLowerCase()) ? "checked" : ""}>` },
+    { key: "email", label: "Email", cls: "em", value: r => r.email.toLowerCase(), html: r => esc(r.email) },
+    { key: "status", label: "Status", value: r => ORDER.indexOf(r.status), html: ePill },
+    { key: "score", label: "Score", cls: "num", value: r => typeof r.score === "number" ? r.score : "", html: r => typeof r.score === "number" ? r.score : '<span class="muted">—</span>' },
+    { key: "why", label: "Why", cls: "why", value: whyE, html: r => esc(whyE(r)) },
+    { key: "job", label: "Job change (Apollo)", cls: "job", value: r => r.apollo ? JOB_ORDER.indexOf(r.apollo.job) : r.status === "dead" ? 90 : "", html: jobCell },
+  ],
+  filters: [
+    ...ORDER.map(s => ({ value: s, label: STATUS[s].title, test: r => r.status === s })),
+    { value: "ticked", label: "Ticked rows", test: r => jSel.has(r.email.toLowerCase()) },
+    { value: "job_todo", label: "Dead — job not checked yet", test: jobTodo },
+    { value: "job_moved", label: "Changed job / acquired (Apollo)", test: r => ["moved", "new_email", "acquired"].includes(r.apollo?.job) },
+    { value: "job_unsure", label: "Apollo — needs a closer look", test: r => ["unconfirmed", "other_company"].includes(r.apollo?.job) },
+    { value: "dym", label: "Has a typo suggestion", test: r => !!r.didYouMean },
+    { value: "free", label: "Free provider (Gmail etc.)", test: r => r.domain?.free === "yes" },
+    { value: "role", label: "Role inbox (info@, sales@…)", test: r => r.account?.role === "yes" },
+  ],
+  text: r => [r.email, r.status, SHORT[r.status], r.bouncerStatus, whyE(r), r.provider, r.didYouMean, r.apollo && [JOB[r.apollo.job]?.t, r.apollo.company, r.apollo.title, r.apollo.newEmail].join(" ")].join(" "),
+  onDraw: v => { const a = $("eTable").querySelector(".jall"); if (!a) return; const todo = v.filter(jobTodo);
+    a.checked = v.length > 0 && v.every(r => jSel.has(r.email.toLowerCase())); a.indeterminate = !a.checked && v.some(r => jSel.has(r.email.toLowerCase())); a.disabled = !v.length; },
+  onFilter: v => { filter = v || null; renderRun(); },
+  onExportView: v => exportCSV(new Set(v)),
+});
+
+// ================= APOLLO JOB-CHANGE CHECK (dead emails) =================
+const JOB = {
+  moved:          { t: "Changed job",    tone: "mint" },
+  new_email:      { t: "New email",      tone: "mint" },
+  acquired:       { t: "Company acquired", tone: "butter" },
+  unconfirmed:    { t: "Unconfirmed match", tone: "lilac" },
+  other_company:  { t: "Now listed elsewhere", tone: "butter" },
+  same:           { t: "Still there",    tone: "butter" },
+  no_current_job: { t: "No current job", tone: "coral" },
+  not_found:      { t: "Not in Apollo",  tone: "lilac" },
+};
+const JOB_ORDER = ["moved", "new_email", "acquired", "other_company", "same", "unconfirmed", "no_current_job", "not_found"];
+// results saved before this rule: "moved" with only the email as proof -> "Now listed elsewhere" (no credits needed)
+function fixJob(r) { const a = r?.apollo; if (a && a.v === 2 && a.job === "moved" && !a.leftOn && !/job history includes/.test(a.evidence || "")) {
+  a.job = "other_company"; a.evidence = `Apollo has this email on ${a.name || "this person"}'s record and lists them at ${a.company}, but shows no job at the old company and no date they moved — this may be the same employer after an acquisition or rename, not a job change`; } return r; }
+const JOB_V = 3;   // results saved before this version used looser matching - offer to re-check them
+function jobTodo(r) { return r.status === "dead" && (!r.apollo || r.apollo.job === "error" || (r.apollo.v || 1) < 3); }   // older results = looked up by email only - offer to re-check
+const jSel = new Set();          // selected dead emails (lowercase)
+const jBusy = new Set();         // being looked up right now
+let jRun = null, apolloMode = "live";
+const ym = d => { if (!d) return ""; const x = new Date(d); return isNaN(x) ? d : x.toLocaleDateString([], { month: "short", year: "numeric" }); };
+
+function jobCell(r) {
+  const e = r.email.toLowerCase();
+  if (jBusy.has(e)) return '<span class="muted">Looking up…</span>';
+  const a = r.apollo;
+  if (!a) return r.status === "dead" ? `<button type="button" class="jbtn" data-e="${esc(e)}" ${jRun ? "disabled" : ""}>Check job</button>` : '<span class="muted">—</span>';
+  if (a.job === "error") return `<span class="muted">${esc(a.error || "Lookup failed")}</span> <button type="button" class="jbtn" data-e="${esc(e)}" ${jRun ? "disabled" : ""}>Retry</button>`;
+  const j = JOB[a.job] || JOB.not_found;
+  const old = (a.v || 1) < JOB_V;
+  const role = [a.title && `<b>${esc(a.title)}</b>`, a.company && esc(a.company)].filter(Boolean).join(" at ");
+  const c = a.contact;
+  const lines = [
+    c && `<span class="muted">Your Apollo contact:</span> <b>${esc(c.name)}</b>${c.title || c.company ? ` — ${esc([c.title, c.company].filter(Boolean).join(" at "))}` : ""}${c.linkedin ? ` <a href="${esc(c.linkedin)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : ""}`,
+    a.name && a.job !== "not_found" && `<span class="muted">Apollo found:</span> ${esc(a.name)}`,
+    role && `${a.job === "same" ? "Still listed as " : a.job === "moved" || a.job === "new_email" ? "Now: " : ""}${role}${a.since && a.job === "moved" ? ` <span class="muted">since ${esc(ym(a.since))}</span>` : ""}`,
+    a.leftOn && `<span class="muted">Left old company ${esc(ym(a.leftOn))}</span>`,
+    a.newEmail && `New email: <b>${esc(a.newEmail)}</b>${a.emailStatus ? ` <span class="muted">(${esc(a.emailStatus)})</span>` : ""}`,
+    a.linkedin && `<a href="${esc(a.linkedin)}" target="_blank" rel="noopener">LinkedIn ↗</a>`,
+    a.job === "same" && !a.newEmail && '<span class="muted">Apollo has no newer email — they may still have left.</span>',
+    a.evidence && `<span class="muted">${a.job === "unconfirmed" ? "⚠ " : "Why: "}${esc(a.evidence)}</span>`,
+    a.history?.length && `<details open><summary class="muted">Job history (Apollo)</summary>${a.history.map(h => `${esc(h.title || "?")} at ${esc(h.org || "?")} <span class="muted">${esc([ym(h.from), h.to === "now" ? "now" : ym(h.to)].filter(Boolean).join(" – "))}</span>`).join("<br>")}</details>`,
+    !c && a.matchedBy === "email" && !old && '<span class="muted">Looked up by email only (not in your saved Apollo contacts).</span>',
+    old && `<span class="muted">Checked by email only (older version) — may be the wrong person.</span> <button type="button" class="jbtn" data-e="${esc(e)}" ${jRun ? "disabled" : ""}>Check again</button>`,
+  ].filter(Boolean);
+  return `<span class="pill" style="--t:var(--${j.tone});--ti:var(--${j.tone}-ink)">${j.t}</span>${lines.length ? `<div class="jinfo">${lines.join("<br>")}</div>` : ""}`;
+}
+
+// find name / company / LinkedIn columns in the uploaded CSV to help Apollo match the right person
+function personFor(job, email) {
+  if (!job.headers || job.kind === "single") return { email };
+  if (!job._pcols) {
+    const h = job.headers.map(x => String(x || "").trim().toLowerCase());
+    const find = re => h.findIndex((x, i) => i !== job.col && re.test(x));
+    job._pcols = {
+      first_name: find(/^(first[\s_-]*name|fname|given[\s_-]*name|first)$/),
+      last_name: find(/^(last[\s_-]*name|lname|surname|family[\s_-]*name|last)$/),
+      name: find(/^(full[\s_-]*name|name|contact[\s_-]*name|person)$/),
+      organization_name: find(/^(company|company[\s_-]*name|organi[sz]ation|organi[sz]ation[\s_-]*name|account[\s_-]*name|employer)$/),
+      linkedin_url: find(/linkedin/),
+    };
+    job._rowOf = new Map();
+    for (const row of job.data) { const e = cleanEmail(row[job.col]).toLowerCase(); if (e && !job._rowOf.has(e)) job._rowOf.set(e, row); }
+  }
+  const row = job._rowOf.get(email) || [], p = { email };
+  for (const [k, i] of Object.entries(job._pcols)) if (i > -1 && row[i]) p[k] = String(row[i]).trim();
+  return p;
+}
+
+async function checkJobs(emails) {
+  if (!B || jRun || !emails.length) return;
+  const job = B;
+  emails = [...new Set(emails)].filter(e => job.results.get(e)?.status === "dead");
+  if (!emails.length) return;
+  if (apolloMode === "live" && !confirm(`Look up ${emails.length.toLocaleString()} dead email${emails.length > 1 ? "s" : ""} in Apollo?\n\nThis uses up to ${emails.length.toLocaleString()} Apollo credit${emails.length > 1 ? "s" : ""} (1 per person Apollo finds - no charge when nobody is found).`)) return;
+  jRun = { done: 0, total: emails.length, error: "", credits: 0 };
+  emails.forEach(e => jBusy.add(e));
+  renderRun();
+  for (let i = 0; i < emails.length && job === B; i += 10) {
+    const chunk = emails.slice(i, i + 10);
+    let d = null, err = "";
+    try {
+      const r = await postJSON("/api/apollo", { people: chunk.map(e => personFor(job, e)) });
+      d = await r.json().catch(() => ({}));
+      if (!r.ok) err = d.error || `Error ${r.status}`;
+    } catch { err = "Can't reach the app server. Is it still running?"; }
+    if (err) {
+      jRun.error = err;
+      const fatal = /key|credits/i.test(err);
+      for (const e of (fatal ? emails.slice(i) : chunk)) { jBusy.delete(e); if (!fatal) { const r = job.results.get(e); if (r) { r.apollo = { job: "error", error: err }; } } }
+      if (fatal) break;
+    } else {
+      jRun.credits += d.credits || 0;
+      if (d.note) jRun.note = d.note;
+      for (const x of d.results || []) {
+        const e = x.email.toLowerCase(), r = job.results.get(e);
+        if (r) { r.apollo = x.apollo; fixJob(r); job.pending.push({ k: e, r }); }
+        jBusy.delete(e); jSel.delete(e);
+      }
+    }
+    chunk.forEach(e => jBusy.delete(e));
+    jRun.done = Math.min(emails.length, i + chunk.length);
+    renderRun();
+    runFlush(job);
+  }
+  const summary = jRun; jRun = null;
+  emails.forEach(e => jBusy.delete(e));
+  if (job !== B) return;
+  const found = emails.filter(e => ["moved", "new_email"].includes(job.results.get(e)?.apollo?.job)).length;
+  summary.msg = summary.error ? summary.error : `Done — ${found.toLocaleString()} of ${emails.length.toLocaleString()} changed job or have a new email.` + (summary.note ? " " + summary.note : "");
+  job._jobMsg = summary.msg;
+  renderRun();
+}
+
+function renderJobBar() {
+  const bar = $("jobBar");
+  if (!B || B.running) { bar.hidden = true; return; }
+  const all = [...B.results.values()].filter(r => r.status === "dead");
+  if (!all.length) { bar.hidden = true; return; }
+  const todo = all.filter(jobTodo).map(r => r.email.toLowerCase());
+  for (const e of [...jSel]) if (!B.results.has(e)) jSel.delete(e);
+  const deadSel = [...jSel].filter(e => B.results.get(e)?.status === "dead");
+  const n = deadSel.length, moved = all.filter(r => ["moved", "new_email"].includes(r.apollo?.job)).length;
+  let text, btns = "";
+  if (jRun) text = `Checking Apollo… ${jRun.done.toLocaleString()} of ${jRun.total.toLocaleString()}`;
+  else {
+    text = `<b>${all.length.toLocaleString()} dead email${all.length > 1 ? "s" : ""}.</b> ` +
+      (todo.length ? `${todo.length.toLocaleString()} to check (new, failed or checked with older matching) — see if they changed jobs (Apollo).` : "All checked in Apollo.") +
+      (moved ? ` ${moved.toLocaleString()} changed job / new email.` : "") +
+      (B._jobMsg ? ` <br><span>${esc(B._jobMsg)}</span>` : "") +
+      (apolloMode === "demo" ? ' <br><span>Apollo demo mode — add APOLLO_API_KEY to .env for real lookups.</span>' : "");
+    btns = (n ? `<button class="go" type="button" id="jobSel">Check ticked dead (${n.toLocaleString()})</button><button class="ghost" type="button" id="jobClear">Clear ticks</button>` : "") +
+      (todo.length ? `<button class="${n ? "ghost" : "go"}" type="button" id="jobAll">Check all ${todo.length.toLocaleString()} dead</button>` : "") +
+      (moved ? `<button class="ghost" type="button" id="jobFilter">Show job changes</button>` : "");
+  }
+  const html = `<p>${text}</p>${btns}`;
+  if (bar.dataset.k !== html) { bar.innerHTML = html; bar.dataset.k = html; }
+  bar.hidden = false;
+}
+
+$("jobBar").addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t || !B) return;
+  if (t.id === "jobSel") checkJobs([...jSel].filter(e => B.results.get(e)?.status === "dead"));
+  if (t.id === "jobAll") checkJobs([...B.results.values()].filter(jobTodo).map(r => r.email.toLowerCase()));
+  if (t.id === "jobClear") { jSel.clear(); renderRun(); }
+  if (t.id === "jobFilter") eTbl.setFilter("job_moved");
+});
+$("eTable").addEventListener("change", e => {
+  const c = e.target;
+  if (c.classList.contains("jsel")) { c.checked ? jSel.add(c.dataset.e) : jSel.delete(c.dataset.e); renderRun(); }
+  if (c.classList.contains("jall")) {
+    for (const r of eTbl.view()) c.checked ? jSel.add(r.email.toLowerCase()) : jSel.delete(r.email.toLowerCase());
+    renderRun();
+  }
+});
+$("eTable").addEventListener("click", e => {
+  const b = e.target.closest(".jbtn"); if (b && !b.disabled) checkJobs([b.dataset.e]);
+});
+
+let emailTab = "one";
+function setTab(which) {
+  emailTab = which;
+  const bulk = which === "bulk";
+  $("tabOne").setAttribute("aria-selected", !bulk);
+  $("tabBulk").setAttribute("aria-selected", bulk);
+  $("single").hidden = bulk; $("bulk").hidden = !bulk;
+  $("headline").textContent = COPY[which][0];
+  $("subline").textContent = COPY[which][1];
+  if (!B?.running) mood("");
+  if (!bulk) input.focus();
+}
+$("tabOne").onclick = () => setTab("one");
+$("tabBulk").onclick = () => setTab("bulk");
+document.querySelector(".tabs").addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+    const next = $("tabOne").getAttribute("aria-selected") === "true" ? "bulk" : "one";
+    setTab(next); $(next === "bulk" ? "tabBulk" : "tabOne").focus();
+  }
+});
+
+// --- CSV parsing ---
+function parseCSV(text) {
+  text = text.replace(/^﻿/, "");
+  const first = text.split(/\r?\n/)[0] || "";
+  const delim = [",", ";", "\t"].map(d => [d, first.split(d).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const rows = []; let row = [], f = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === delim) { row.push(f); f = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+    else f += c;
+  }
+  if (f !== "" || row.length) { row.push(f); rows.push(row); }
+  return { rows: rows.filter(r => r.some(v => v.trim() !== "")), delim };
+}
+const cleanEmail = v => String(v || "").trim().replace(/^mailto:/i, "").replace(/^<|>$/g, "");
+
+function loadTable(name, rows, delim) {
+  $("bulkErr").textContent = "";
+  if (!rows.length) return $("bulkErr").textContent = "That file looks empty.";
+  const hasHeader = !rows[0].some(v => looksLikeEmail(cleanEmail(v)));
+  const width = Math.max(...rows.map(r => r.length));
+  const headers = hasHeader
+    ? Array.from({ length: width }, (_, i) => (rows[0][i] || "").trim() || `Column ${i + 1}`)
+    : Array.from({ length: width }, (_, i) => `Column ${i + 1}`);
+  const data = hasHeader ? rows.slice(1) : rows;
+  if (!data.length) return $("bulkErr").textContent = "That file only has a header row — there are no emails in it.";
+
+  // guess the email column: header named like "email", otherwise the column with the most email-looking values
+  let col = headers.findIndex(h => /e-?mail/i.test(h));
+  if (col < 0) {
+    const counts = headers.map((_, i) => data.reduce((n, r) => n + (looksLikeEmail(cleanEmail(r[i])) ? 1 : 0), 0));
+    col = counts.indexOf(Math.max(...counts));
+  }
+  jSel.clear(); B = { name, delim, headers, hasHeader, data, col, results: new Map(), running: false, paused: false, stopped: false };
+  $("fName").textContent = name;
+  $("col").innerHTML = headers.map((h, i) => `<option value="${i}">${esc(h)}</option>`).join("");
+  $("col").value = col;
+  $("colRow").hidden = headers.length < 2;
+  summarize();
+  $("pick").hidden = true; $("run").hidden = true; $("review").hidden = false;
+  $("start").focus();
+}
+
+function summarize() {
+  const seen = new Set(); let dupes = 0, bad = 0;
+  for (const r of B.data) {
+    const e = cleanEmail(r[B.col]).toLowerCase();
+    if (!looksLikeEmail(e)) { bad++; continue; }
+    if (seen.has(e)) dupes++; else seen.add(e);
+  }
+  B.unique = [...seen];
+  const n = B.unique.length;
+  $("fMeta").textContent = `${B.data.length.toLocaleString()} rows`;
+  const parts = [`<strong>${n.toLocaleString()}</strong> email${n === 1 ? "" : "s"} to check`];
+  if (dupes) parts.push(`${dupes.toLocaleString()} duplicate${dupes === 1 ? "" : "s"} (checked once)`);
+  if (bad) parts.push(`${bad.toLocaleString()} row${bad === 1 ? "" : "s"} without a valid email (kept, marked “skipped”)`);
+  const mins = Math.ceil((n * 2.5) / CONCURRENCY / 60);
+  let html = parts.join(" · ") + `.<br>Uses about ${n.toLocaleString()} credit${n === 1 ? "" : "s"}` +
+    (credits != null ? ` — you have ${Number(credits).toLocaleString()}.` : ".") +
+    (n > 40 ? ` Takes roughly ${mins} minute${mins === 1 ? "" : "s"}; keep this tab open.` : "");
+  const short = credits != null && credits < n;
+  if (short) html = `Heads up: you have ${Number(credits).toLocaleString()} credits but ${n.toLocaleString()} emails. Mochi will stop when credits run out — you can still download what's done.<br>` + html;
+  if (!n) html = "No valid email addresses found in this column. Try picking a different column above.";
+  $("summary").innerHTML = html;
+  $("summary").className = "note" + (short || !n ? " warn" : "");
+  $("start").disabled = !n;
+  $("start").textContent = n ? `Check ${n.toLocaleString()} email${n === 1 ? "" : "s"}` : "Nothing to check";
+}
+$("col").onchange = () => { B.col = +$("col").value; summarize(); };
+$("reset").onclick = resetBulk;
+
+function resetBulk() {
+  if (B?.running) { B.stopped = true; }
+  B = null; filter = null; eTbl.reset(); $("eTable").hidden = true;
+  $("file").value = ""; $("pasteBox").value = "";
+  $("review").hidden = true; $("run").hidden = true; $("pick").hidden = false;
+  mood("");
+}
+
+async function readFile(f) {
+  if (!f) return;
+  if (f.size > 20 * 1024 * 1024) return $("bulkErr").textContent = "That file is over 20 MB — please split it into smaller files.";
+  if (!/\.(csv|txt|tsv)$/i.test(f.name) && !/csv|text/.test(f.type)) return $("bulkErr").textContent = "Please choose a .csv file. (In Excel: File → Save As → CSV.)";
+  const { rows, delim } = parseCSV(await f.text());
+  loadTable(f.name, rows, delim);
+}
+$("file").onchange = e => readFile(e.target.files[0]);
+const drop = $("drop");
+["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => readFile(e.dataTransfer.files[0]));
+// let a dropped file anywhere on the bulk tab work too
+$("bulk").addEventListener("dragover", e => e.preventDefault());
+$("bulk").addEventListener("drop", e => { e.preventDefault(); if (!$("pick").hidden) readFile(e.dataTransfer.files[0]); });
+
+$("pasteToggle").onclick = () => { $("paste").classList.toggle("on"); if ($("paste").classList.contains("on")) $("pasteBox").focus(); };
+$("pasteGo").onclick = () => {
+  const list = $("pasteBox").value.split(/[\s,;]+/).map(cleanEmail).filter(Boolean);
+  if (!list.length) return $("bulkErr").textContent = "Paste at least one email address.";
+  loadTable("Pasted list", [["email"], ...list.map(e => [e])], ",");
+};
+$("sample").onclick = () => download("mochi-emails-sample.csv",
+  "name,email,company\r\nAva Perera,ava@gmail.com,Acme\r\nInfo inbox,info@acme.com,Acme\r\nTypo Tom,tom@gmial.com,Globex\r\nGone Gina,bad@initech.com,Initech\r\nMaybe Max,maybe@umbrella.com,Umbrella\r\n");
+
+// --- running ---
+$("start").onclick = startRun;
+
+async function startRun() {
+  Object.assign(B, { running: true, paused: false, stopped: false, fatal: "", pending: B.pending || [] });
+  await runCreate("emails", B);
+  $("review").hidden = true; $("run").hidden = false; $("runErr").textContent = "";
+  $("eTable").hidden = false;
+  mood("thinking", "#FFD7C2", "M70 94 Q75 97 80 94");
+  renderRun();
+  const queue = B.unique.filter(e => !B.results.has(e));
+  const job = B;
+  const worker = async () => {
+    while (queue.length && !job.stopped) {
+      while (job.paused && !job.stopped) await new Promise(r => setTimeout(r, 300));
+      if (job.stopped) break;
+      const email = queue.shift();
+      const res = await verifyOne(email, job);
+      if (res) { job.results.set(email, res); job.pending.push({ k: email, r: res }); } else queue.unshift(email); // null = fatal, put back
+      scheduleRender();
+    }
+  };
+  const saver = setInterval(() => runFlush(job), 2000);
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  clearInterval(saver);
+  job.running = false;
+  await runFlush(job, job.results.size >= job.unique.length ? "done" : "stopped");
+  if (job !== B) return;
+  renderRun();
+  const done = job.results.size, good = [...job.results.values()].filter(r => r.status === "safe").length;
+  const share = done ? good / done : 0;
+  const s = share > .8 ? STATUS.safe : share > .5 ? STATUS.risk : STATUS.dead;
+  if (done) mood(s.mood, s.body, s.mouth); else mood("worried", STATUS.risk.body, STATUS.risk.mouth);
+}
+
+async function verifyOne(email, job) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch("/api/verify?bulk=1&email=" + encodeURIComponent(email));
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) return d;
+      if (r.status === 401 || r.status === 402) { job.fatal = d.error; job.stopped = true; return null; }
+      if (r.status === 429) { await new Promise(s => setTimeout(s, 4000 * (attempt + 1))); continue; }
+      if (attempt < 2) { await new Promise(s => setTimeout(s, 3000)); continue; }
+      return { email, status: "risk", bouncerStatus: "error", reason: "unverified", _error: d.error || `Error ${r.status}` };
+    } catch {
+      if (attempt === 2) { job.fatal = "Lost connection to the app server. Is it still running?"; job.stopped = true; return null; }
+      await new Promise(s => setTimeout(s, 2000));
+    }
+  }
+  return { email, status: "risk", bouncerStatus: "error", reason: "unverified", _error: "Bouncer was busy" };
+}
+
+let renderQueued = false;
+function scheduleRender() { if (!renderQueued) { renderQueued = true; setTimeout(() => { renderQueued = false; renderRun(); }, 250); } }
+
+function renderRun() {
+  if (!B) return;
+  const total = B.unique.length, done = B.results.size, pct = total ? Math.round(done / total * 100) : 0;
+  $("pFill").style.width = pct + "%";
+  $("pBar").setAttribute("aria-valuenow", pct);
+  $("pCount").textContent = `${done.toLocaleString()} of ${total.toLocaleString()}` + saveLabel(B);
+  $("pTitle").textContent = B.running ? (B.paused ? "Paused" : `Checking… ${pct}%`) : (done === total ? "All done!" : "Stopped");
+  $("runErr").textContent = B.fatal || "";
+
+  const counts = Object.fromEntries(ORDER.map(s => [s, 0]));
+  for (const r of B.results.values()) counts[ORDER.includes(r.status) ? r.status : "risk"]++;
+  $("tally").innerHTML = ORDER.map(s => {
+    const t = STATUS[s].tone;
+    return `<button class="tal ${filter && filter !== s && STATUS[filter] ? "dim" : ""}" data-s="${s}" aria-pressed="${filter === s}" style="--t:var(--${t});--ti:var(--${t}-ink)" title="Show only ${SHORT[s].toLowerCase()}"><b>${counts[s].toLocaleString()}</b><span>${SHORT[s]}</span></button>`;
+  }).join("");
+
+  // buttons
+  let btns;
+  if (B.running) btns = `<button class="ghost" id="pauseBtn">${B.paused ? "Resume" : "Pause"}</button><button class="ghost" id="stopBtn">Stop</button>`;
+  else {
+    const left = total - done;
+    btns = `<button class="go" id="dlAll">Download results (CSV)</button>` +
+      (counts.safe ? `<button class="ghost" id="dlGood">Only safe ones</button>` : "") +
+      (left && !B.fatal?.includes("credits") ? `<button class="ghost" id="resume">Continue (${left.toLocaleString()} left)</button>` : "") +
+      `<button class="ghost" id="newList">New list</button>`;
+  }
+  if ($("runBtns").dataset.k !== btns) { $("runBtns").innerHTML = btns; $("runBtns").dataset.k = btns; }
+
+  eTbl.set(B.unique.map(e => B.results.get(e)).filter(Boolean), B.running);
+  renderJobBar();
+  const selKey = [...jSel].sort().join(",");
+  if (sfBulkOwner !== B || (selKey !== sfBulkSel && !sfBulk.busy())) { sfBulkOwner = B; sfBulkSel = selKey; sfBulk.reset(); }
+  $("sfBulk").hidden = B.running || !B.results.size;
+  if (!$("sfBulk").hidden && sfBulk.idle()) sfBulk.draw();
+}
+
+$("run").addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t || !B) return;
+  if (t.classList.contains("tal")) { eTbl.setFilter(filter === t.dataset.s ? "" : t.dataset.s); return; }
+  switch (t.id) {
+    case "pauseBtn": B.paused = !B.paused; mood(B.paused ? "" : "thinking"); renderRun(); break;
+    case "stopBtn": B.stopped = true; break;
+    case "dlAll": exportCSV(false); break;
+    case "dlGood": exportCSV(true); break;
+    case "resume": startRun(); break;
+    case "newList": resetBulk(); break;
+  }
+});
+
+// --- export: original columns + results ---
+function exportCSV(onlyGood) {
+  const yn = v => v === "yes" || v === true ? "yes" : v === "no" || v === false ? "no" : (v || "");
+  const extra = ["bouncer_status", "bouncer_reason", "bouncer_score", "did_you_mean", "free_provider", "disposable", "role_account", "catch_all", "mailbox_full", "provider", "bouncer_raw_status", "tries",
+    "apollo_job_status", "apollo_title", "apollo_company", "apollo_company_domain", "apollo_new_email", "apollo_email_status", "apollo_linkedin", "apollo_left_old_company", "apollo_checked", "apollo_match_note", "apollo_found_name", "your_contact_name", "your_contact_title", "your_contact_company", "apollo_lookup_by", "apollo_job_history"];
+  const pad = a => [...a, ...Array(Math.max(0, extra.length - a.length)).fill("")];
+  const out = [[...B.headers, ...extra]];
+  for (const row of B.data) {
+    const e = cleanEmail(row[B.col]).toLowerCase();
+    const r = looksLikeEmail(e) ? B.results.get(e) : null;
+    if (onlyGood instanceof Set ? !onlyGood.has(r) : (onlyGood && r?.status !== "safe")) continue;
+    const base = B.headers.map((_, i) => row[i] ?? "");
+    if (!looksLikeEmail(e)) { out.push(pad([...base.map(String), "skipped", "no valid email in this row"]).slice(0, base.length + extra.length)); continue; }
+    if (!r) { out.push(pad([...base.map(String), "not_checked"]).slice(0, base.length + extra.length)); continue; }
+    const dm = r.domain || {}, ac = r.account || {};
+    out.push([...base, SHORT[r.status] || "Bounce Risk", r._error ? "error: " + r._error : (r.reason || ""), r.score ?? "", r.didYouMean || "",
+      yn(dm.free), yn(dm.disposable), yn(ac.role), yn(dm.acceptAll), yn(ac.fullMailbox), r.provider || "", r.bouncerStatus || "", r.tries || "",
+      ...(() => { const a = r.apollo; if (!a) return Array(16).fill("");
+        return [JOB[a.job]?.t || a.job, a.title || "", a.company || "", a.companyDomain || "", a.newEmail || "", a.emailStatus || "", a.linkedin || "", a.leftOn || "", (a.checked || "").slice(0, 10), a.evidence || "",
+          a.name || "", a.contact?.name || "", a.contact?.title || "", a.contact?.company || "", ({ contact: "your Apollo contact", csv: "CSV name", email: "email only" })[a.matchedBy] || "email only",
+          (a.history || []).map(h => `${h.title || "?"} at ${h.org || "?"} (${[h.from, h.to].filter(Boolean).join(" to ")})`).join(" | ")]; })()]);
+  }
+  const d = B.delim;
+  const cell = v => { v = String(v); return /["\r\n]/.test(v) || v.includes(d) ? `"${v.replace(/"/g, '""')}"` : v; };
+  const base = B.name.replace(/\.(csv|txt|tsv)$/i, "").replace(/[^\w\- ]+/g, "").trim() || "emails";
+  download(`${base}_${onlyGood instanceof Set ? "filtered" : onlyGood ? "good" : "verified"}.csv`, "﻿" + out.map(r => r.map(cell).join(d)).join("\r\n"));
+}
+
+function download(name, text) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+window.addEventListener("beforeunload", e => { if (B?.running || S?.running || SF?.running || SF?.pushing) { e.preventDefault(); e.returnValue = ""; } });
+
+// ================= WEBSITES =================
+const SITE = {
+  OK:                    { short: "OK",           title: "Working fine",        tone: "mint",   mood: "happy",    icon: "check",
+    why: "The site loaded normally, with no redirects.",
+    advice: "“OK” means it loads, not that it's the right content — check the page title matches what you expect." },
+  REDIRECT_SAME_SITE:    { short: "Same-site redirect", title: "Working (redirects)", tone: "mint", mood: "happy", icon: "check",
+    why: "It redirects within the same website — for example http → https or adding www. That's normal.",
+    advice: "Nothing to fix. You may want to store the final address in your list." },
+  REDIRECT_OTHER_DOMAIN: { short: "Other domain", title: "Sends visitors elsewhere", tone: "butter", mood: "worried", icon: "warn",
+    why: "This address redirects to a different website.",
+    advice: "Compare the final address and title. Same organisation (a rebrand or new domain)? Use the new URL. Unrelated? The domain was probably sold or hijacked." },
+  PARKED_OR_FOR_SALE:    { short: "Parked",       title: "Parked or for sale",  tone: "lilac",  mood: "sad",      icon: "x",
+    why: "The domain shows a “for sale” or ad page — it has most likely expired.",
+    advice: "Open the archive snapshot to see what the site used to be, then search the organisation's name for its current website." },
+  PLACEHOLDER:           { short: "Placeholder",  title: "Placeholder page",    tone: "butter", mood: "confused", icon: "q",
+    why: "It shows a placeholder — “account suspended”, a default server page or “coming soon”.",
+    advice: "The real site isn't there. Check the archive snapshot, or search the organisation's name." },
+  HTTP_ERROR:            { short: "HTTP error",   title: "Page error",          tone: "coral",  mood: "sad",      icon: "x",
+    why: "The server answered, but with an error.",
+    advice: "Try the archive snapshot or search for the organisation's current site." },
+  DEAD:                  { short: "Dead",         title: "Not reachable",       tone: "coral",  mood: "sad",      icon: "x",
+    why: "The domain doesn't exist, the server isn't responding, or the connection timed out.",
+    advice: "Check the archive snapshot to find the organisation's name, then search for its current site." },
+};
+const SITE_ORDER = ["OK", "REDIRECT_SAME_SITE", "REDIRECT_OTHER_DOMAIN", "PARKED_OR_FOR_SALE", "PLACEHOLDER", "HTTP_ERROR", "DEAD"];
+const SITE_BROKEN = new Set(["REDIRECT_OTHER_DOMAIN", "PARKED_OR_FOR_SALE", "PLACEHOLDER", "HTTP_ERROR", "DEAD"]);
+const SITE_COPY = {
+  one:  ["Is this website still alive?", "Mochi visits the site, follows every redirect and tells you if it's working, moved, parked or gone."],
+  bulk: ["Check a list of websites", "Drop in a CSV or text file. You'll get it back with a verdict, the redirect chain and a fix for each site."],
+};
+const SITE_LOADING = ["Visiting the site…", "Following redirects…", "Trying other versions of the address…", "Checking the Internet Archive…", "Slow server — still waiting…"];
+const MOOD_OF = Object.fromEntries(Object.entries(STATUS).map(([k, v]) => [v.mood, v]));
+const looksLikeSite = v => /^(https?:\/\/)?[^\s\/@]+\.[^\s\/@.]{2,}(:\d+)?([\/?#]\S*)?$/iu.test(String(v || "").trim());
+const siteKey = v => String(v || "").trim().toLowerCase().replace(/\/+$/, "");
+const prettyUrl = u => { try { const x = new URL(u); return x.host + (x.pathname === "/" ? "" : x.pathname) + x.search; } catch { return u; } };
+
+let section = "emails", siteTab = "one", sCurrent = null, S = null, sFilter = null;
+const sInput = $("sInput");
+
+function siteMood(verdict, fixed) {
+  const v = SITE[verdict] || SITE.DEAD;
+  const m = fixed ? "worried" : v.mood;
+  const ref = MOOD_OF[m] || STATUS.unknown;
+  mood(m, ref.body, ref.mouth);
+}
+
+// --- section + tabs ---
+function setSection(which) {
+  section = which; curSection = which;
+  if (which !== "history") lastWorkSection = which;
+  const sites = which === "sites", hist = which === "history";
+  $("histsec").hidden = !hist; $("histBtn").setAttribute("aria-pressed", hist);
+  if (hist) {
+    $("emailsec").hidden = $("sitesec").hidden = $("sfsec").hidden = true;
+    $("secEmail").setAttribute("aria-pressed", false); $("secSite").setAttribute("aria-pressed", false); $("secSf").setAttribute("aria-pressed", false);
+    $("bodyMail").style.display = ""; $("bodyGlobe").style.display = $("moonWrap").style.display = "none";
+    $("badge").style.display = "none";
+    $("headline").textContent = "Your past checks";
+    $("subline").textContent = "Every list and single check is saved on this computer. Open one to see the results again, continue an unfinished list, or download it.";
+    $("foot").textContent = "Saved in the data folder next to the app";
+    mood(""); loadHistory();
+    return;
+  }
+  $("bodyMail").style.display = sites ? "none" : "";
+  $("bodyGlobe").style.display = $("moonWrap").style.display = sites ? "" : "none";
+  const sfx = which === "salesforce";
+  $("secEmail").setAttribute("aria-pressed", !sites && !sfx);
+  $("secSite").setAttribute("aria-pressed", sites);
+  $("secSf").setAttribute("aria-pressed", sfx);
+  $("emailsec").hidden = sites || sfx; $("sitesec").hidden = !sites; $("sfsec").hidden = !sfx;
+  $("badge").style.display = sites ? "none" : "";
+  $("foot").textContent = sites ? "Website checks run from your computer · snapshots from the Internet Archive" : sfx ? "Records come from Salesforce · emails checked by Bouncer" : "Powered by the Bouncer verification API";
+  if (sfx) sfEnter(); else if (sites) sSetTab(siteTab); else setTab(emailTab);
+}
+$("secEmail").onclick = () => setSection("emails");
+$("secSite").onclick = () => setSection("sites");
+$("secSf").onclick = () => setSection("salesforce");
+
+function sSetTab(which) {
+  siteTab = which;
+  const bulk = which === "bulk";
+  $("sTabOne").setAttribute("aria-selected", !bulk);
+  $("sTabBulk").setAttribute("aria-selected", bulk);
+  $("sSingle").hidden = bulk; $("sBulk").hidden = !bulk;
+  $("headline").textContent = SITE_COPY[which][0];
+  $("subline").textContent = SITE_COPY[which][1];
+  if (!S?.running) mood("");
+  if (!bulk) sInput.focus();
+}
+$("sTabOne").onclick = () => sSetTab("one");
+$("sTabBulk").onclick = () => sSetTab("bulk");
+$("sTabs").addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+    const next = siteTab === "one" ? "bulk" : "one";
+    sSetTab(next); $(next === "bulk" ? "sTabBulk" : "sTabOne").focus();
+  }
+});
+
+// --- single website ---
+function sHint(text, err) { $("sHint").className = "hint" + (err ? " err" : ""); $("sHint").innerHTML = text; }
+sInput.addEventListener("input", () => {
+  if ($("sHint").classList.contains("err")) sHint("A bare domain or a full link both work · <kbd>Enter</kbd> to check");
+  if (!$("sGo").disabled) mood(sInput.value ? "typing" : "");
+});
+sInput.addEventListener("keydown", e => { if (e.key === "Escape") { sInput.value = ""; mood(""); } });
+$("sForm").addEventListener("submit", e => { e.preventDefault(); sCheck(sInput.value); });
+
+async function sCheck(raw) {
+  const site = raw.trim();
+  if (!site) { sHint("Type a website address first — like example.com", true); mood("confused", STATUS.unknown.body, STATUS.unknown.mouth); return sInput.focus(); }
+  if (!looksLikeSite(site)) { sHint("That doesn't look like a website yet — try something like example.com", true); mood("confused", STATUS.unknown.body, STATUS.unknown.mouth); return sInput.focus(); }
+  $("sResult").classList.remove("on"); sHint("&nbsp;");
+  $("sGo").disabled = true; $("sGo").textContent = "Checking…";
+  mood("thinking", "#FFD7C2", "M70 94 Q75 97 80 94");
+  $("sLoading").classList.add("on");
+  let i = 0; $("sLoadMsg").textContent = SITE_LOADING[0];
+  const t = setInterval(() => { i = Math.min(i + 1, SITE_LOADING.length - 1); $("sLoadMsg").textContent = SITE_LOADING[i]; }, 3500);
+  try {
+    const r = await fetch("/api/site?url=" + encodeURIComponent(site));
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || "Something went wrong. Please try again.");
+    sShow(d);
+    saveSingle("sites", siteKey(d.input || site), d);
+  } catch (err) {
+    mood("worried", STATUS.risk.body, STATUS.risk.mouth);
+    sHint(err.message === "Failed to fetch" ? "Can't reach the app server. Is it still running?" : esc(err.message), true);
+  } finally {
+    clearInterval(t);
+    $("sLoading").classList.remove("on");
+    $("sGo").disabled = false; $("sGo").textContent = "Check it";
+  }
+}
+
+function siteWhy(d) {
+  const v = SITE[d.verdict] || SITE.DEAD;
+  if (d.verdict === "DEAD" && d.note) return `It couldn't be reached: ${d.note.charAt(0).toLowerCase() + d.note.slice(1)}.`;
+  if (d.verdict === "HTTP_ERROR" && d.note) return d.note + ".";
+  return v.why;
+}
+
+function sShow(d) {
+  sCurrent = d;
+  const v = SITE[d.verdict] || SITE.DEAD, fixed = !!d.working_variant;
+  siteMood(d.verdict, fixed);
+  const res = $("sResult");
+  res.style.setProperty("--tone", `var(--${v.tone})`);
+  res.style.setProperty("--tone-ink", `var(--${v.tone}-ink)`);
+  $("sIcon").innerHTML = ICONS[v.icon];
+  $("sTitle").textContent = v.title;
+  $("sUrl").textContent = d.input;
+  $("sWhy").textContent = siteWhy(d);
+  $("sAdvice").textContent = fixed ? "Good news — it works under another version of the address. Update your list with the one below." : v.advice;
+
+  $("sFix").hidden = !fixed;
+  if (fixed) $("sFix").innerHTML = `<span>It works at <strong>${esc(d.working_variant)}</strong></span><button type="button" id="sUseFix">Copy address</button>`;
+
+  const chain = d.redirect_chain || [];
+  $("sChain").hidden = chain.length < 2;
+  $("sChain").innerHTML = chain.map(u => `<span class="hop">${esc(prettyUrl(u))}</span>`).join('<span class="arrow" aria-label="redirects to">→</span>');
+
+  const link = (u, label) => u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(label || prettyUrl(u))}</a>` : "—";
+  const facts = [
+    ["HTTP status", d.status_code || "No answer"],
+    ["Page title", d.title || (fixed ? d.variant_title : "") || "—"],
+    ["Final address", d.final_url ? link(d.final_url) : "—", true, true],
+  ];
+  if (d.linkedin_url) facts.push(["LinkedIn page", liLink(d.linkedin_url), true, true]);
+  else if (!SITE_BROKEN.has(d.verdict) || fixed) facts.push(["LinkedIn page", "Not found on the homepage, contact or about pages", true]);
+  if (d.wayback_snapshot) facts.push(["Last archive snapshot", link(d.wayback_snapshot, `View snapshot from ${d.wayback_date || "the archive"} ↗`), true, true]);
+  else if (SITE_BROKEN.has(d.verdict) && !fixed && d.verdict !== "REDIRECT_OTHER_DOMAIN") facts.push(["Archive snapshot", "None found", true]);
+  $("sFacts").innerHTML = facts.map(([k, val, wide, html]) =>
+    `<div class="fact ${wide ? "wide" : ""}"><b>${k}</b><span>${html ? val : esc(val)}</span></div>`).join("");
+
+  const open = d.working_variant || d.final_url || d.checked_url;
+  $("sOpen").hidden = !open || (!fixed && (d.verdict === "DEAD"));
+  if (open) $("sOpen").href = open;
+
+  res.classList.add("on");
+  res.focus({ preventScroll: true });
+  res.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+$("sResult").addEventListener("click", async e => {
+  if (e.target.id !== "sUseFix") return;
+  try { await navigator.clipboard.writeText(sCurrent.working_variant); e.target.textContent = "Copied!"; } catch { e.target.textContent = "Couldn't copy"; }
+  setTimeout(() => e.target.textContent = "Copy address", 1600);
+});
+$("sAgain").onclick = () => { $("sResult").classList.remove("on"); sInput.value = ""; mood(""); sInput.focus(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+$("sCopy").onclick = async () => {
+  if (!sCurrent) return;
+  const d = sCurrent;
+  const text = [`${d.input} — ${d.verdict}`, d.status_code && `status ${d.status_code}`, d.final_url && `final: ${d.final_url}`,
+    d.working_variant && `works at: ${d.working_variant}`, d.wayback_snapshot && `snapshot: ${d.wayback_snapshot}`, d.note].filter(Boolean).join(" · ");
+  try { await navigator.clipboard.writeText(text); $("sCopy").textContent = "Copied!"; } catch { $("sCopy").textContent = "Couldn't copy"; }
+  setTimeout(() => $("sCopy").textContent = "Copy result", 1600);
+};
+
+// --- bulk websites ---
+const SITE_CONCURRENCY = 8;
+
+function sLoadTable(name, rows, delim) {
+  $("sBulkErr").textContent = "";
+  if (!rows.length) return $("sBulkErr").textContent = "That file looks empty.";
+  const hasHeader = !rows[0].some(v => looksLikeSite(v));
+  const width = Math.max(...rows.map(r => r.length));
+  const headers = Array.from({ length: width }, (_, i) => (hasHeader ? (rows[0][i] || "").trim() : "") || (width === 1 ? "website" : `Column ${i + 1}`));
+  const data = hasHeader ? rows.slice(1) : rows;
+  if (!data.length) return $("sBulkErr").textContent = "That file only has a header row — there are no websites in it.";
+  let col = headers.findIndex(h => /web|site|url|domain|homepage|link/i.test(h) && !/e-?mail/i.test(h));
+  if (col < 0) {
+    const counts = headers.map((_, i) => data.reduce((n, r) => n + (looksLikeSite(r[i]) ? 1 : 0), 0));
+    col = counts.indexOf(Math.max(...counts));
+  }
+  S = { name, delim, headers, data, col, results: new Map(), running: false, paused: false, stopped: false };
+  $("sFName").textContent = name;
+  $("sCol").innerHTML = headers.map((h, i) => `<option value="${i}">${esc(h)}</option>`).join("");
+  $("sCol").value = col;
+  $("sColRow").hidden = headers.length < 2;
+  sSummarize();
+  $("sPick").hidden = true; $("sRun").hidden = true; $("sReview").hidden = false;
+  $("sStart").focus();
+}
+
+function sSummarize() {
+  const seen = new Map(); let dupes = 0, bad = 0;
+  for (const r of S.data) {
+    const v = String(r[S.col] || "").trim();
+    if (!looksLikeSite(v)) { bad++; continue; }
+    const k = siteKey(v);
+    if (seen.has(k)) dupes++; else seen.set(k, v);
+  }
+  S.unique = [...seen.keys()]; S.raw = seen;
+  const n = S.unique.length;
+  $("sFMeta").textContent = `${S.data.length.toLocaleString()} rows`;
+  const parts = [`<strong>${n.toLocaleString()}</strong> website${n === 1 ? "" : "s"} to check`];
+  if (dupes) parts.push(`${dupes.toLocaleString()} duplicate${dupes === 1 ? "" : "s"} (checked once)`);
+  if (bad) parts.push(`${bad.toLocaleString()} row${bad === 1 ? "" : "s"} without a website (kept, marked “skipped”)`);
+  const mins = Math.max(1, Math.ceil((n * 4) / SITE_CONCURRENCY / 60));
+  let html = parts.join(" · ") + ". No credits needed.";
+  if (n > 20) html += ` Takes roughly ${mins} minute${mins === 1 ? "" : "s"} — keep this tab open.`;
+  if (n > 20000) html += "<br>That's a big list — consider splitting it into files of about 20,000 so you can pick up where you left off.";
+  if (!n) html = "No website addresses found in this column. Try picking a different column above.";
+  $("sSummary").innerHTML = html;
+  $("sSummary").className = "note" + (!n ? " warn" : "");
+  $("sStart").disabled = !n;
+  $("sStart").textContent = n ? `Check ${n.toLocaleString()} website${n === 1 ? "" : "s"}` : "Nothing to check";
+}
+$("sCol").onchange = () => { S.col = +$("sCol").value; sSummarize(); };
+$("sReset").onclick = sResetBulk;
+function sResetBulk() {
+  if (S?.running) S.stopped = true;
+  S = null; sFilter = null; sTbl.reset(); $("sTable").hidden = true;
+  $("sFile").value = ""; $("sPasteBox").value = "";
+  $("sReview").hidden = true; $("sRun").hidden = true; $("sPick").hidden = false;
+  mood("");
+}
+
+async function sReadFile(f) {
+  if (!f) return;
+  if (f.size > 50 * 1024 * 1024) return $("sBulkErr").textContent = "That file is over 50 MB — please split it into smaller files.";
+  if (!/\.(csv|txt|tsv)$/i.test(f.name) && !/csv|text/.test(f.type)) return $("sBulkErr").textContent = "Please choose a .csv or .txt file. (In Excel: File → Save As → CSV.)";
+  const { rows, delim } = parseCSV(await f.text());
+  sLoadTable(f.name, rows, delim);
+}
+$("sFile").onchange = e => sReadFile(e.target.files[0]);
+const sDrop = $("sDrop");
+["dragenter", "dragover"].forEach(t => sDrop.addEventListener(t, e => { e.preventDefault(); sDrop.classList.add("over"); }));
+["dragleave", "drop"].forEach(t => sDrop.addEventListener(t, e => { e.preventDefault(); sDrop.classList.remove("over"); }));
+sDrop.addEventListener("drop", e => sReadFile(e.dataTransfer.files[0]));
+$("sBulk").addEventListener("dragover", e => e.preventDefault());
+$("sBulk").addEventListener("drop", e => { e.preventDefault(); if (!$("sPick").hidden) sReadFile(e.dataTransfer.files[0]); });
+
+$("sPasteToggle").onclick = () => { $("sPaste").classList.toggle("on"); if ($("sPaste").classList.contains("on")) $("sPasteBox").focus(); };
+$("sPasteGo").onclick = () => {
+  const list = $("sPasteBox").value.split(/[\s,;]+/).map(v => v.trim()).filter(Boolean);
+  if (!list.length) return $("sBulkErr").textContent = "Paste at least one website address.";
+  sLoadTable("Pasted list", [["website"], ...list.map(v => [v])], ",");
+};
+$("sSample").onclick = () => download("mochi-websites-sample.csv",
+  "company,website\r\nExample Org,example.com\r\nWikipedia,http://wikipedia.org\r\nGitHub,github.com\r\nNo Such Co,this-domain-should-not-exist-12345.com\r\n");
+
+$("sStart").onclick = sStartRun;
+
+async function sStartRun() {
+  Object.assign(S, { running: true, paused: false, stopped: false, fatal: "", pending: S.pending || [] });
+  await runCreate("sites", S);
+  $("sReview").hidden = true; $("sRun").hidden = false; $("sRunErr").textContent = "";
+  $("sTable").hidden = false; $("sGuide").hidden = true;
+  mood("thinking", "#FFD7C2", "M70 94 Q75 97 80 94");
+  sRender();
+  const job = S;
+  const queue = job.unique.filter(k => !job.results.has(k));
+  let fails = 0;
+  const worker = async () => {
+    while (queue.length && !job.stopped) {
+      while (job.paused && !job.stopped) await new Promise(r => setTimeout(r, 300));
+      if (job.stopped) break;
+      const k = queue.shift();
+      try {
+        const r = await fetch("/api/site?url=" + encodeURIComponent(job.raw.get(k)));
+        const d = await r.json();
+        const res = r.ok ? d : { input: job.raw.get(k), verdict: "DEAD", note: d.error || `Error ${r.status}`, redirect_chain: [] };
+        job.results.set(k, res); job.pending.push({ k, r: res });
+        fails = 0;
+      } catch {
+        queue.unshift(k);
+        if (++fails >= 3) { job.fatal = "Lost connection to the app server. Is it still running?"; job.stopped = true; }
+        else await new Promise(s => setTimeout(s, 2000));
+      }
+      sSchedule();
+    }
+  };
+  const saver = setInterval(() => runFlush(job), 2000);
+  await Promise.all(Array.from({ length: SITE_CONCURRENCY }, worker));
+  clearInterval(saver);
+  job.running = false;
+  await runFlush(job, job.results.size >= job.unique.length ? "done" : "stopped");
+  if (job !== S) return;
+  sRender();
+  const all = [...job.results.values()];
+  const good = all.filter(r => !SITE_BROKEN.has(r.verdict) || r.working_variant).length;
+  const share = all.length ? good / all.length : 0;
+  const m = share > .8 ? STATUS.safe : share > .5 ? STATUS.risk : STATUS.dead;
+  mood(m.mood, m.body, m.mouth);
+}
+
+const liShort = u => { try { return decodeURIComponent(new URL(u).pathname.replace(/\/$/, "")); } catch { return u; } };
+const liLink = u => u ? `<a class="li" href="${esc(u)}" target="_blank" rel="noopener" title="${esc(u)}"><i>in</i><span>${esc(liShort(u))}</span></a>` : '<span class="muted">—</span>';
+const sTbl = DataTable($("sTable"), {
+  placeholder: "Search sites, titles, LinkedIn…",
+  columns: [
+    { key: "site", label: "Website", cls: "em", value: r => r.input.toLowerCase(), html: r => esc(r.input) },
+    { key: "verdict", label: "Verdict", value: r => SITE_ORDER.indexOf(r.verdict), html: r => { const v = SITE[r.verdict] || SITE.DEAD; return `<span class="pill" style="--t:var(--${v.tone});--ti:var(--${v.tone}-ink)">${v.short}</span>`; } },
+    { key: "li", label: "LinkedIn", value: r => r.linkedin_url ? liShort(r.linkedin_url).toLowerCase() : "", html: r => liLink(r.linkedin_url) },
+    { key: "details", label: "Details", cls: "why", value: r => (r.title || r.note || "").toLowerCase(), html: r => sDetail(r) },
+  ],
+  filters: [
+    ...SITE_ORDER.map(v => ({ value: v, label: SITE[v].title, test: r => r.verdict === v })),
+    { value: "FIX", label: "Fix found (works at another address)", test: r => !!r.working_variant },
+    { value: "LI", label: "Has a LinkedIn page", test: r => !!r.linkedin_url },
+    { value: "NOLI", label: "Working, but no LinkedIn found", test: r => !r.linkedin_url && (!SITE_BROKEN.has(r.verdict) || r.working_variant) },
+    { value: "BROKEN", label: "Needs fixing", test: r => SITE_BROKEN.has(r.verdict) },
+  ],
+  text: r => [r.input, r.verdict, SITE[r.verdict]?.short, r.title, r.final_url, r.working_variant, r.linkedin_url, r.note, r.status_code].join(" "),
+  onFilter: v => { sFilter = v || null; sRender(); },
+  onExportView: v => sExport(new Set(v)),
+});
+
+let sQueued = false;
+function sSchedule() { if (!sQueued) { sQueued = true; setTimeout(() => { sQueued = false; sRender(); }, 250); } }
+
+function sDetail(r) {
+  if (r.working_variant) return `Works at <a href="${esc(r.working_variant)}" target="_blank" rel="noopener">${esc(prettyUrl(r.working_variant))}</a>`;
+  if (r.verdict === "REDIRECT_OTHER_DOMAIN") return `→ <a href="${esc(r.final_url)}" target="_blank" rel="noopener">${esc(prettyUrl(r.final_url))}</a>${r.title ? " · " + esc(r.title) : ""}`;
+  if (r.verdict === "OK" || r.verdict === "REDIRECT_SAME_SITE") return esc(r.title || prettyUrl(r.final_url || ""));
+  const bits = [r.note ? esc(r.note) : ""];
+  if (r.wayback_snapshot) bits.push(`<a href="${esc(r.wayback_snapshot)}" target="_blank" rel="noopener">snapshot ${esc(r.wayback_date || "")} ↗</a>`);
+  return bits.filter(Boolean).join(" · ") || esc(r.title || "");
+}
+
+function sRender() {
+  if (!S) return;
+  const total = S.unique.length, done = S.results.size, pct = total ? Math.round(done / total * 100) : 0;
+  $("sPFill").style.width = pct + "%";
+  $("sPBar").setAttribute("aria-valuenow", pct);
+  const liCount = [...S.results.values()].filter(r => r.linkedin_url).length;
+  $("sPCount").textContent = `${done.toLocaleString()} of ${total.toLocaleString()}` + (done ? ` · ${liCount.toLocaleString()} LinkedIn` : "") + saveLabel(S);
+  $("sPTitle").textContent = S.running ? (S.paused ? "Paused" : `Checking… ${pct}%`) : (done === total ? "All done!" : "Stopped");
+  $("sRunErr").textContent = S.fatal || "";
+
+  const counts = Object.fromEntries(SITE_ORDER.map(v => [v, 0])); let fixes = 0;
+  for (const r of S.results.values()) { counts[SITE[r.verdict] ? r.verdict : "DEAD"]++; if (r.working_variant) fixes++; }
+  const tal = (key, n, label, tone) =>
+    `<button class="tal ${sFilter && sFilter !== key && (SITE[sFilter] || sFilter === "FIX") ? "dim" : ""}" data-s="${key}" aria-pressed="${sFilter === key}" style="--t:var(--${tone});--ti:var(--${tone}-ink)" title="Show only these"><b>${n.toLocaleString()}</b><span>${label}</span></button>`;
+  $("sTally").innerHTML = SITE_ORDER.map(v => tal(v, counts[v], SITE[v].short, SITE[v].tone)).join("") + tal("FIX", fixes, "Fix found", "mint");
+
+  let btns;
+  if (S.running) btns = `<button class="ghost" id="sPauseBtn">${S.paused ? "Resume" : "Pause"}</button><button class="ghost" id="sStopBtn">Stop</button>`;
+  else {
+    const left = total - done;
+    const broken = [...S.results.values()].filter(r => SITE_BROKEN.has(r.verdict)).length;
+    btns = `<button class="go" id="sDlAll">Download results (CSV)</button>` +
+      (broken ? `<button class="ghost" id="sDlBroken">Only ones to fix</button>` : "") +
+      (left ? `<button class="ghost" id="sResume">Continue (${left.toLocaleString()} left)</button>` : "") +
+      `<button class="ghost" id="sNewList">New list</button>`;
+  }
+  if ($("sRunBtns").dataset.k !== btns) { $("sRunBtns").innerHTML = btns; $("sRunBtns").dataset.k = btns; }
+  $("sGuide").hidden = S.running || !done;
+
+  sTbl.set(S.unique.map(k => S.results.get(k)).filter(Boolean), S.running);
+}
+
+$("sRun").addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t || !S) return;
+  if (t.classList.contains("tal")) { sTbl.setFilter(sFilter === t.dataset.s ? "" : t.dataset.s); return; }
+  switch (t.id) {
+    case "sPauseBtn": S.paused = !S.paused; mood(S.paused ? "" : "thinking"); sRender(); break;
+    case "sStopBtn": S.stopped = true; break;
+    case "sDlAll": sExport(false); break;
+    case "sDlBroken": sExport(true); break;
+    case "sResume": sStartRun(); break;
+    case "sNewList": sResetBulk(); break;
+  }
+});
+
+function sExport(onlyBroken) {
+  const extra = ["verdict", "status_code", "final_url", "redirect_chain", "title", "working_variant", "linkedin_url", "linkedin_found_on", "wayback_snapshot", "wayback_date", "note"];
+  const out = [[...S.headers, ...extra]];
+  for (const row of S.data) {
+    const v = String(row[S.col] || "").trim();
+    const r = looksLikeSite(v) ? S.results.get(siteKey(v)) : null;
+    if (onlyBroken instanceof Set ? !onlyBroken.has(r) : (onlyBroken && !(r && SITE_BROKEN.has(r.verdict)))) continue;
+    const base = S.headers.map((_, i) => row[i] ?? "");
+    const blank = n => Array(n).fill("");
+    if (!looksLikeSite(v)) { out.push([...base, "skipped", ...blank(9), "no website in this row"]); continue; }
+    if (!r) { out.push([...base, "not_checked", ...blank(10)]); continue; }
+    out.push([...base, r.verdict, r.status_code ?? "", r.final_url || "", (r.redirect_chain || []).join(" → "), r.title || "",
+      r.working_variant || "", r.linkedin_url || "", r.linkedin_found_on || "", r.wayback_snapshot || "", r.wayback_date || "", r.note || ""]);
+  }
+  const d = S.delim;
+  const cell = x => { x = String(x); return /["\r\n]/.test(x) || x.includes(d) ? `"${x.replace(/"/g, '""')}"` : x; };
+  const base = S.name.replace(/\.(csv|txt|tsv)$/i, "").replace(/[^\w\- ]+/g, "").trim() || "websites";
+  download(`${base}_${onlyBroken instanceof Set ? "filtered" : onlyBroken ? "to_fix" : "checked"}.csv`, "﻿" + out.map(r => r.map(cell).join(d)).join("\r\n"));
+}
+
+// ================= HISTORY =================
+let runs = [], hShown = 30;
+const RUN_IC = {
+  emails: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>',
+  sites: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg>',
+};
+const activeJob = id => (B?.running && B.runId === id) || (S?.running && S.runId === id);
+const unfinished = m => m.kind === "list" && m.done < m.total;
+
+async function refreshHistCount() {
+  try {
+    runs = await (await fetch("/api/runs")).json();
+    $("histCount").hidden = !runs.length; $("histCount").textContent = runs.length;
+    if (section === "history") drawHistory();
+  } catch {}
+}
+async function loadHistory() {
+  $("hMsg").textContent = "";
+  if (!runs.length) $("runList").innerHTML = '<div class="hist-empty">Loading…</div>';
+  await refreshHistCount();
+  drawHistory();
+}
+
+function drawHistory() {
+  const q = $("hSearch").value.trim().toLowerCase(), t = $("hType").value;
+  const list = runs.filter(m =>
+    (!q || `${m.name} ${m.type === "emails" ? "emails" : "websites"}`.toLowerCase().includes(q)) &&
+    (!t || m.type === t || m.kind === t || (t === "unfinished" && unfinished(m))));
+  $("hMore").hidden = list.length <= hShown;
+  if (!list.length) {
+    $("runList").innerHTML = `<div class="hist-empty">${runs.length ? "Nothing matches that search." : "Nothing saved yet. Every list and single check you run will show up here."}</div>`;
+    return;
+  }
+  $("runList").innerHTML = list.slice(0, hShown).map(runCard).join("");
+}
+
+function runCard(m) {
+  const isE = m.type === "emails";
+  const order = isE ? ORDER : SITE_ORDER;
+  const info = k => isE ? { tone: STATUS[k]?.tone || "lilac", label: SHORT[k] || k } : { tone: SITE[k]?.tone || "coral", label: SITE[k]?.short || k };
+  if (isE && m.counts) { const c = {}; for (const [k, n] of Object.entries(m.counts)) { const k2 = LEGACY[k] || k; c[k2] = (c[k2] || 0) + n; } m = { ...m, counts: c }; }
+  const keys = [...order, ...Object.keys(m.counts || {}).filter(k => !order.includes(k))].filter(k => m.counts?.[k]);
+  const bar = keys.map(k => `<i style="flex:${m.counts[k]};background:var(--${info(k).tone}-ink)" title="${esc(info(k).label)}: ${m.counts[k]}"></i>`).join("");
+  const legend = keys.map(k => `<span><i style="background:var(--${info(k).tone}-ink)"></i>${m.counts[k].toLocaleString()} ${esc(info(k).label)}</span>`).join("")
+    + (!isE && m.linkedin ? `<span><i style="background:#0A66C2"></i>${m.linkedin.toLocaleString()} LinkedIn</span>` : "")
+    + (!isE && m.fixes ? `<span><i style="background:var(--mint-ink)"></i>${m.fixes.toLocaleString()} fix found</span>` : "");
+  const when = new Date(m.created).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+  const live = activeJob(m.id), open = unfinished(m) && !live;
+  const chip = m.kind === "single" ? ["Single checks", "lilac"] : live ? ["Running…", "butter"] : open ? [`Unfinished · ${m.done}/${m.total}`, "butter"] : ["Done", "mint"];
+  const count = m.kind === "single" ? `${m.done.toLocaleString()} checked` : `${m.done.toLocaleString()} of ${m.total.toLocaleString()} checked`;
+  return `<article class="run" data-id="${esc(m.id)}">
+    <div class="run-head">
+      <div class="run-ic ${m.type}">${RUN_IC[m.type]}</div>
+      <div><div class="run-name">${esc(m.kind === "single" ? `${m.name} · ${new Date(m.created).toLocaleDateString([], { dateStyle: "medium" })}` : m.name)}</div>
+        <div class="run-meta">${isE ? "Emails" : "Websites"} · ${m.kind === "single" ? "last " + new Date(m.updated).toLocaleTimeString([], { timeStyle: "short" }) : when} · ${count}${m.demo ? " · demo data" : ""}</div></div>
+      <span class="run-chip" style="--t:var(--${chip[1]});--ti:var(--${chip[1]}-ink)">${chip[0]}</span>
+    </div>
+    ${bar ? `<div class="run-bar">${bar}</div><div class="run-legend">${legend}</div>` : ""}
+    <div class="run-actions">
+      <button class="go" data-act="open">Open results</button>
+      ${open ? `<button class="ghost" data-act="continue">Continue (${(m.total - m.done).toLocaleString()} left)</button>` : ""}
+      <button class="ghost" data-act="download" ${m.done ? "" : "disabled"}>Download CSV</button>
+      ${live ? "" : `<button class="ghost del" data-act="delete">Delete</button>`}
+    </div>
+  </article>`;
+}
+
+// rebuild a job object (like B / S) from a saved run
+function buildState(run) {
+  const { meta, input, results } = run, single = meta.kind === "single", isE = meta.type === "emails";
+  return {
+    name: meta.name, delim: input.delim || ",",
+    headers: single ? [isE ? "email" : "website"] : input.headers,
+    data: single ? results.map(x => [isE ? (x.r.email || x.k) : (x.r.input || x.k)]) : input.data,
+    col: single ? 0 : input.col,
+    results: new Map(results
+      .filter(x => !(isE && !single && (x.r.status === "unknown" || x.r.bouncerStatus === "error")))   // re-check these on Continue
+      .map(x => [x.k, isE ? fixJob(normE(x.r)) : x.r])),
+    runId: meta.id, kind: meta.kind, pending: [], running: false, paused: false, stopped: false, fatal: "", saveState: "saved",
+  };
+}
+const fetchRun = async id => { const r = await fetch(`/api/runs/${id}`); if (!r.ok) throw new Error("That run couldn't be loaded."); return r.json(); };
+const shareMood = (job, isE) => {
+  const all = [...job.results.values()];
+  const good = all.filter(r => isE ? r.status === "safe" : (!SITE_BROKEN.has(r.verdict) || r.working_variant)).length;
+  const share = all.length ? good / all.length : 0;
+  const m = share > .8 ? STATUS.safe : share > .5 ? STATUS.risk : STATUS.dead;
+  mood(m.mood, m.body, m.mouth);
+};
+
+async function openRun(id, thenContinue) {
+  $("hMsg").textContent = "";
+  let run; try { run = await fetchRun(id); } catch (e) { return $("hMsg").textContent = e.message; }
+  const isE = run.meta.type === "emails";
+  const cur = isE ? B : S;
+  if (cur?.running) {
+    if (cur.runId === id) { setSection(isE ? "emails" : "sites"); isE ? setTab("bulk") : sSetTab("bulk"); return; }
+    return $("hMsg").textContent = `A ${isE ? "email" : "website"} list is still running. Stop it or let it finish first.`;
+  }
+  const st = buildState(run);
+  if (isE) {
+    B = st; filter = null; jSel.clear(); eTbl.reset();
+    $("fName").textContent = st.name; summarize();
+    setSection("emails"); setTab("bulk");
+    $("pick").hidden = true; $("review").hidden = true; $("run").hidden = false; $("eTable").hidden = false;
+    renderRun(); shareMood(B, true);
+    if (thenContinue) startRun();
+  } else {
+    S = st; sFilter = null; sTbl.reset();
+    $("sFName").textContent = st.name; sSummarize();
+    setSection("sites"); sSetTab("bulk");
+    $("sPick").hidden = true; $("sReview").hidden = true; $("sRun").hidden = false; $("sTable").hidden = false;
+    sRender(); shareMood(S, false);
+    if (thenContinue) sStartRun();
+  }
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function downloadRun(id) {
+  try {
+    const run = await fetchRun(id), st = buildState(run);
+    if (run.meta.type === "emails") { const prev = B; B = st; try { exportCSV(false); } finally { B = prev; } }
+    else { const prev = S; S = st; try { sExport(false); } finally { S = prev; } }
+  } catch (e) { $("hMsg").textContent = e.message; }
+}
+
+$("runList").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const id = b.closest(".run").dataset.id;
+  switch (b.dataset.act) {
+    case "open": openRun(id); break;
+    case "continue": openRun(id, true); break;
+    case "download": downloadRun(id); break;
+    case "delete":
+      if (!b.classList.contains("armed")) {
+        b.classList.add("armed"); b.textContent = "Delete for good?";
+        setTimeout(() => { b.classList.remove("armed"); b.textContent = "Delete"; }, 4000);
+        return;
+      }
+      b.disabled = true;
+      await fetch(`/api/runs/${id}`, { method: "DELETE" }).catch(() => {});
+      if (B?.runId === id) B.runId = null;
+      if (S?.runId === id) S.runId = null;
+      refreshHistCount();
+      break;
+  }
+});
+$("hSearch").addEventListener("input", () => { hShown = 30; drawHistory(); });
+$("hType").addEventListener("change", () => { hShown = 30; drawHistory(); });
+$("hMore").onclick = () => { hShown += 30; drawHistory(); };
+$("histBtn").onclick = () => section === "history" ? setSection(lastWorkSection) : setSection("history");
+var lastWorkSection = "emails";
+refreshHistCount();
+
+// ================= UPDATE SALESFORCE FROM THE EMAILS SECTION =================
+// Finds Leads / Contacts with these emails and writes the new verification status.
+function SfPush(el, getItems, label) {
+  let st = { phase: "idle" };
+  const okRes = r => r && !r._error && r.bouncerStatus !== "error";
+  const resMap = () => { const m = new Map(); for (const r of getItems()) if (r?.email) m.set(cleanEmail(r.email).toLowerCase(), r); return m; };
+  const plural = (o, n) => n === 1 ? o : o + "s";
+  const draw = () => {
+    const P = st.phase;
+    if (P === "idle") {
+      const n = [...resMap().values()].filter(okRes).length;
+      el.innerHTML = n ? `<div class="sfp-row"><button type="button" class="ghost sfp-find">Update Salesforce</button><span class="muted">Find the Leads and Contacts that use ${label(n)} and write the new verification status.</span></div>` : "";
+      return;
+    }
+    if (P === "matching") { el.innerHTML = `<p class="note">Looking up ${label(st.n)} in Salesforce…</p>`; return; }
+    if (P === "error") {
+      el.innerHTML = `<p class="note warn">${esc(st.error)}${st.needsLogin ? ` <button type="button" class="linkish sfp-go">Open the Salesforce section</button>` : ""}</p><div class="sfp-row"><button type="button" class="ghost sfp-find">Try again</button><button type="button" class="ghost sfp-cancel">Close</button></div>`;
+      return;
+    }
+    const m = st.match, rm = resMap();
+    const objs = Object.entries(m.objects).filter(([, o]) => o.records.some(r => okRes(rm.get(r.Email))));
+    const total = objs.reduce((n, [, o]) => n + o.records.filter(r => okRes(rm.get(r.Email))).length, 0);
+    const emailsHit = new Set(objs.flatMap(([, o]) => o.records.map(r => r.Email)));
+    if (!total) {
+      el.innerHTML = `<p class="note">No Leads or Contacts in Salesforce use ${label(st.n)}${m.objects.Lead ? " (converted Leads are skipped)" : ""}.</p><div class="sfp-row"><button type="button" class="ghost sfp-cancel">Close</button></div>`;
+      return;
+    }
+    let html = `<p class="note">Found <b>${objs.map(([o, x]) => { const k = x.records.filter(r => okRes(rm.get(r.Email))).length; return `${k.toLocaleString()} ${plural(o, k)}`; }).join(" and ")}</b> for ${emailsHit.size.toLocaleString()} of ${st.n.toLocaleString()} ${st.n === 1 ? "email" : "emails"}.` +
+      ` Only <b>Email Verification Status</b> is written${m.writeDate ? " (plus today's date)" : " — Salesforce updates the verified date itself"}.${m.demo ? " <i>(Sample records — demo mode.)</i>" : ""}</p>`;
+    for (const [o, x] of objs) {
+      if (x.warning) html += `<p class="note warn">${esc(x.warning)}</p>`;
+      html += `<h3 class="sf-sub">${plural(o, 2)}</h3>`;
+      if (x.records.length <= 10) html += `<ul class="sfp-list">${x.records.filter(r => okRes(rm.get(r.Email))).map(r => {
+        const p = st.push.get(r.Id), res = rm.get(r.Email);
+        return `<li><b>${esc(r.Name || r.Id)}</b> <span class="muted">${esc(r.Email)}</span> · ${esc(r.oldStatus || "(blank)")} → ${esc(st.maps[o][res.status] || "?")}` +
+          (p ? (p.ok ? ` <span class="sf-push ok">✓ Updated</span>` : ` <span class="sf-push bad">✕ ${esc(p.error)}</span>`) : "") + `</li>`; }).join("")}</ul>`;
+    }
+    const ok = [...st.push.values()].filter(x => x.ok).length, bad = [...st.push.values()].filter(x => !x.ok);
+    const left = total - ok;
+    if (P === "pushing") html += `<p class="note">Updating Salesforce… ${st.done.toLocaleString()} of ${st.todo.toLocaleString()}</p>`;
+    else {
+      if (st.push.size) html += `<p class="note ${bad.length ? "warn" : ""}">${ok ? `✓ ${ok.toLocaleString()} updated in Salesforce.` : ""}${bad.length ? ` ${bad.length.toLocaleString()} failed.` : ""}</p>`;
+      if (bad.length && total > 10) html += `<ul class="sfp-list">${bad.slice(0, 15).map(x => `<li><b>${esc(x.name)}</b> <span class="muted">${esc(x.email)}</span> <span class="sf-push bad">✕ ${esc(x.error)}</span></li>`).join("")}${bad.length > 15 ? `<li class="muted">…and ${bad.length - 15} more</li>` : ""}</ul>`;
+      if (st.err) html += `<p class="hint err">${esc(st.err)}</p>`;
+      html += `<div class="sfp-row">` + (left ? `<button type="button" class="go sfp-push">${st.push.size ? "Retry" : "Update"} ${left.toLocaleString()} ${left === 1 ? "record" : "records"}</button>` : "") + `<button type="button" class="ghost sfp-cancel">${left ? "Cancel" : "Close"}</button></div>`;
+    }
+    el.innerHTML = html;
+  };
+  async function find() {
+    const emails = [...resMap().entries()].filter(([, r]) => okRes(r)).map(([e]) => e);
+    st = { phase: "matching", n: emails.length, push: new Map(), maps: {} }; draw();
+    try {
+      const r = await postJSON("/api/sf/match", { emails });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { st.phase = "error"; st.error = d.error || `Error ${r.status}`; st.needsLogin = r.status === 401; return draw(); }
+      st.match = d; st.phase = "matched";
+      for (const [o, x] of Object.entries(d.objects)) st.maps[o] = sfDefaultMap({ object: o, fields: x.fields });
+    } catch { st.phase = "error"; st.error = "Couldn't reach the Mochi server. Is it still running?"; }
+    draw();
+  }
+  async function push() {
+    const rm = resMap();
+    const jobs = [];
+    for (const [o, x] of Object.entries(st.match.objects)) for (const r of x.records) {
+      const res = rm.get(r.Email); if (!okRes(res) || st.push.get(r.Id)?.ok) continue;
+      jobs.push({ o, id: r.Id, status: st.maps[o][res.status], name: r.Name, email: r.Email, s: res.status });
+    }
+    const missing = [...new Set(jobs.filter(j => !j.status).map(j => `${SHORT[j.s]} (${plural(j.o, 2)})`))];
+    if (missing.length) { st.err = "Choose what to write for " + missing.join(", ") + " first."; return draw(); }
+    st.err = ""; st.phase = "pushing"; st.done = 0; st.todo = jobs.length; draw();
+    for (const o of Object.keys(st.match.objects)) {
+      const list = jobs.filter(j => j.o === o);
+      for (let i = 0; i < list.length; i += 200) {
+        const chunk = list.slice(i, i + 200);
+        try {
+          const r = await postJSON("/api/sf/update", { object: o, items: chunk.map(j => ({ id: j.id, status: j.status })) });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(d.error || `Error ${r.status}`);
+          d.results.forEach((x, k) => st.push.set(x.id, { ok: x.success, error: x.error, name: chunk[k].name, email: chunk[k].email }));
+        } catch (e) { st.err = "Stopped writing to Salesforce: " + e.message; st.phase = "matched"; return draw(); }
+        st.done += chunk.length; draw();
+      }
+    }
+    st.phase = "matched"; draw();
+  }
+  el.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.classList.contains("sfp-find")) find();
+    else if (b.classList.contains("sfp-push")) push();
+    else if (b.classList.contains("sfp-cancel")) api.reset();
+    else if (b.classList.contains("sfp-go")) { sfConn = null; setSection("salesforce"); }
+  });
+  el.addEventListener("change", e => {
+    const t = e.target; if (!t.dataset.o || !st.maps) return;
+    st.maps[t.dataset.o][t.dataset.s] = t.value.trim();
+    try { localStorage.setItem("mochi.sfmap." + t.dataset.o, JSON.stringify(st.maps[t.dataset.o])); } catch {}
+    if (st.phase === "matched") draw();
+  });
+  const api = { reset() { st = { phase: "idle" }; draw(); }, draw, busy: () => st.phase === "pushing" || st.phase === "matching", idle: () => st.phase === "idle" };
+  return api;
+}
+const sfOne = SfPush($("sfOne"), () => current ? [current] : [], () => "this email");
+let sfBulkOwner = null;
+const sfBulk = SfPush($("sfBulk"), () => !B ? [] : jSel.size ? [...jSel].map(e => B.results.get(e)).filter(Boolean) : [...B.results.values()],
+  n => jSel.size ? `the ${n.toLocaleString()} ticked ${n === 1 ? "email" : "emails"}` : `these ${n.toLocaleString()} emails`);
+let sfBulkSel = "";
+
+// ================= SALESFORCE (re-verify expired Leads / Contacts) =================
+let SF = null, sfConn = null, sfFilter = "";
+const SF_STATUS_F = "Email_Verification_Status__c", SF_DATE_F = "Email_Verified_Date__c";
+const sfKey = r => cleanEmail(r.Email).toLowerCase();
+const sfRes = r => SF?.results.get(sfKey(r));
+const fmtDate = v => v ? String(v).slice(0, 10) : "";
+
+function sfEnter() {
+  $("headline").textContent = "Re-verify Salesforce emails";
+  $("subline").textContent = "Fetch Leads or Contacts whose last check is too old, verify them with Bouncer, then write the fresh results back.";
+  if (!SF?.running) mood("");
+  if (!sfConn) sfCheckConn();
+}
+
+async function sfCheckConn() {
+  $("sfDot").className = "sf-dot wait"; $("sfWho").innerHTML = "<b>Checking the Salesforce connection…</b>";
+  $("sfConnErr").hidden = true; $("sfConnBtns").innerHTML = "";
+  try { sfConn = await (await fetch("/api/sf/status")).json(); }
+  catch { sfConn = { connected: false, error: "Couldn't reach the Mochi server. Is it still running?" }; }
+  const c = sfConn;
+  $("sfDot").className = "sf-dot " + (c.connected ? "ok" : "bad");
+  $("sfWho").innerHTML = c.demo ? `<b>Demo mode</b>${esc(c.instance)}`
+    : c.connected ? `<b>Connected${c.user ? " as " + esc(c.user) : ""}</b>${esc(c.instance)} · ${c.how === "keys" ? "using the app keys" : "signed in"}`
+    : `<b>Not connected</b>`;
+  let btns = `<button class="ghost" type="button" id="sfRetry">${c.connected ? "Re-check" : "Try again"}</button>`;
+  if (!c.connected && c.canLogin) btns = `<a class="ghost" href="/api/sf/login" id="sfLogin">Sign in with Salesforce</a>` + btns;
+  if (c.connected && c.how === "login") btns += `<button class="ghost" type="button" id="sfLogout">Sign out</button>`;
+  $("sfConnBtns").innerHTML = btns;
+  if (c.error) { $("sfConnErr").hidden = false; $("sfConnErr").textContent = c.error; }
+  $("sfLeads").disabled = $("sfContacts").disabled = !c.connected;
+}
+$("sfConnP").addEventListener("click", async e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.id === "sfRetry") { sfConn = null; sfCheckConn(); }
+  if (t.id === "sfLogout") { await postJSON("/api/sf/logout", {}).catch(() => {}); sfConn = null; sfCheckConn(); }
+});
+$("sfLeads").onclick = () => sfFetch("Lead");
+$("sfContacts").onclick = () => sfFetch("Contact");
+
+async function sfFetch(object) {
+  if (SF?.running) { $("sfErr").textContent = "Wait for the current check to finish (or stop it) first."; return; }
+  const months = Math.max(1, Math.min(120, +$("sfMonths").value || 8)); $("sfMonths").value = months;
+  const limit = Math.max(0, +$("sfLimit").value || 0);
+  const btn = $(object === "Lead" ? "sfLeads" : "sfContacts"), label = btn.textContent;
+  $("sfErr").textContent = ""; btn.disabled = true; btn.textContent = "Fetching…"; mood("thinking");
+  try {
+    const r = await fetch(`/api/sf/fetch?object=${object}&months=${months}&blank=${$("sfBlank").checked ? 1 : 0}&limit=${limit}`);
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { if (d.needsLogin) { sfConn = null; sfCheckConn(); } throw new Error(d.error || `Error ${r.status}`); }
+    sfLoad(d); mood("");
+  } catch (err) { $("sfErr").textContent = err.message; mood("worried", STATUS.risk.body, STATUS.risk.mouth); }
+  finally { btn.textContent = label; btn.disabled = !sfConn?.connected; }
+}
+
+function sfLoad(d) {
+  const recs = d.records.map(r => ({ ...r, Email: cleanEmail(r.Email) }));
+  const unique = [...new Set(recs.map(sfKey).filter(looksLikeEmail))];
+  const today = new Date().toISOString().slice(0, 10);
+  const plural = d.object === "Lead" ? "Leads" : "Contacts";
+  const headers = ["Id", d.object === "Lead" ? "Lead_ID_18_Digit__c" : "Contact_ID_18_Digit__c", "Name", d.object === "Lead" ? "Company" : "Account", "Email", SF_STATUS_F + " (before)", SF_DATE_F + " (before)"];
+  SF = { object: d.object, plural, fetched: d, recs, unique, results: new Map(), push: new Map(), sel: new Set(),
+    name: `Salesforce ${plural} (verified before ${d.cutoff}) ${today}`, headers, col: 4, delim: ",",
+    data: recs.map(r => [r.Id, r.id18, r.Name, r.Company, r.Email, r.oldStatus, fmtDate(r.oldDate)]),
+    pending: [], running: false, paused: false, stopped: false, fatal: "", runId: null, saveState: "", map: sfDefaultMap(d) };
+  sfFilter = ""; sfTbl.reset(); $("sfRunErr").textContent = "";
+  $("sfRun").hidden = false;
+  sfRender();
+  $("sfRun").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// --- what to write into Email_Verification_Status__c for Safe / Bounce Risk / Dead ---
+const SF_GUESS = {
+  safe: [/^safe$/i, /(^|[^n])deliverable/i, /^valid/i, /verified/i, /good|^ok$|active|pass/i],
+  risk: [/risk/i, /accept.?all|catch/i, /unknown|unverif|unsure/i],
+  dead: [/dead/i, /undeliver/i, /invalid/i, /^bounce(d)?$|hard.?bounce/i, /bad|fail|reject/i],
+};
+function sfDefaultMap(d) {
+  // Always Safe / Bounce Risk / Dead. If the picklist stores them differently (e.g. "safe"), use its exact value.
+  const pl = d.fields?.status?.picklist || [];
+  const map = {};
+  for (const st of ORDER) {
+    const want = SHORT[st].toLowerCase();
+    const hit = pl.find(p => String(p.value).toLowerCase() === want || String(p.label).toLowerCase() === want);
+    map[st] = hit ? hit.value : SHORT[st];
+  }
+  return map;
+}
+function sfDrawMap() {
+  const f = SF.fetched.fields?.status, pl = f?.picklist || [];
+  const ctl = s => pl.length
+    ? `<select data-s="${s}" aria-label="Value for ${SHORT[s]}"><option value="">— choose —</option>${pl.map(p => `<option value="${esc(p.value)}" ${SF.map[s] === p.value ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select>`
+    : `<input data-s="${s}" value="${esc(SF.map[s] || "")}" aria-label="Value for ${SHORT[s]}" />`;
+  const html = ORDER.map(s => `<span>${ePill({ status: s })}</span>${ctl(s)}`).join("");
+  if ($("sfMap").dataset.k !== html) { $("sfMap").innerHTML = html; $("sfMap").dataset.k = html; }
+  $("sfMapNote").innerHTML = `Only <b>${esc(f?.label || SF_STATUS_F)}</b> is written — it gets the value below for each result` +
+    (SF.fetched.writeDate ? `, and <b>${esc(SF.fetched.fields?.date?.label || SF_DATE_F)}</b> is set to today.` : `. Salesforce updates <b>${esc(SF.fetched.fields?.date?.label || SF_DATE_F)}</b> itself.`) + ` Rows where Bouncer had an error are skipped.`;
+}
+$("sfMap").addEventListener("change", e => {
+  const s = e.target.dataset.s; if (!s || !SF) return;
+  SF.map[s] = e.target.value.trim();
+  try { localStorage.setItem("mochi.sfmap." + SF.object, JSON.stringify(SF.map)); } catch {}
+  sfRender();
+});
+$("sfMap").addEventListener("input", e => { if (e.target.tagName === "INPUT" && SF) { SF.map[e.target.dataset.s] = e.target.value.trim(); try { localStorage.setItem("mochi.sfmap." + SF.object, JSON.stringify(SF.map)); } catch {} } });
+
+// --- verify (reuses the bulk checker) ---
+async function sfVerify(only) {
+  const job = SF;
+  Object.assign(job, { running: true, paused: false, stopped: false, fatal: "" });
+  await runCreate("emails", job);
+  mood("thinking", "#FFD7C2", "M70 94 Q75 97 80 94");
+  sfRender();
+  const queue = (only || job.unique).filter(e => !job.results.has(e));
+  job.batch = { done: 0, total: queue.length, partial: !!only };
+  const worker = async () => {
+    while (queue.length && !job.stopped) {
+      while (job.paused && !job.stopped) await new Promise(r => setTimeout(r, 300));
+      if (job.stopped) break;
+      const email = queue.shift();
+      const res = await verifyOne(email, job);
+      if (res) { job.results.set(email, res); job.pending.push({ k: email, r: res }); job.batch.done++; } else queue.unshift(email);
+      sfSchedule();
+    }
+  };
+  const saver = setInterval(() => runFlush(job), 2000);
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  clearInterval(saver);
+  job.running = false;
+  await runFlush(job, job.results.size >= job.unique.length ? "done" : "stopped");
+  if (job !== SF) return;
+  sfRender();
+  const all = [...job.results.values()], share = all.length ? all.filter(r => r.status === "safe").length / all.length : 0;
+  const m = share > .8 ? STATUS.safe : share > .5 ? STATUS.risk : STATUS.dead;
+  if (all.length) mood(m.mood, m.body, m.mouth); else mood("");
+}
+let sfQueued = false;
+function sfSchedule() { if (!sfQueued) { sfQueued = true; setTimeout(() => { sfQueued = false; sfRender(); }, 250); } }
+
+// --- write back ---
+const sfPushable = r => { const res = sfRes(r); return res && !res._error && res.bouncerStatus !== "error" && !SF.push.get(r.Id)?.ok; };
+async function sfPush() {
+  const job = SF;
+  const missing = ORDER.filter(s => !job.map[s] && (job.sel.size ? sfSelRecs() : job.recs).some(r => sfPushable(r) && sfRes(r).status === s));
+  if (missing.length) { $("sfRunErr").textContent = `Choose what to write for ${missing.map(s => SHORT[s]).join(", ")} first.`; return; }
+  const pool = job.sel.size ? sfSelRecs() : job.recs;
+  const items = pool.filter(sfPushable).map(r => ({ id: r.Id, status: job.map[sfRes(r).status] }));
+  if (!items.length) return;
+  job.pushing = { done: 0, total: items.length }; $("sfRunErr").textContent = ""; sfRender();
+  for (let i = 0; i < items.length && job === SF; i += 200) {
+    const chunk = items.slice(i, i + 200);
+    try {
+      const r = await postJSON("/api/sf/update", { object: job.object, items: chunk });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || `Error ${r.status}`);
+      const val = new Map(chunk.map(x => [x.id, x.status]));
+      for (const x of d.results) job.push.set(x.id, { ok: x.success, error: x.error, value: val.get(x.id), at: new Date().toISOString() });
+    } catch (err) { $("sfRunErr").textContent = "Stopped writing to Salesforce: " + err.message; break; }
+    job.pushing.done = Math.min(items.length, i + chunk.length); sfRender();
+  }
+  job.pushing = null; sfRender();
+  const failed = [...job.push.values()].filter(x => !x.ok).length;
+  if (failed) sfTbl.setFilter("push_bad");
+}
+
+// --- table ---
+const sfPushCell = r => {
+  const p = SF.push.get(r.Id), res = sfRes(r);
+  if (p?.ok) return `<span class="sf-push ok">✓ Updated → ${esc(p.value)}</span>`;
+  if (p && !p.ok) return `<span class="sf-push bad" title="${esc(p.error)}">✕ ${esc(p.error || "Failed")}</span>`;
+  if (!looksLikeEmail(sfKey(r))) return '<span class="muted">No valid email</span>';
+  if (!res) return '<span class="muted">—</span>';
+  if (res._error || res.bouncerStatus === "error") return '<span class="muted">Skipped (check failed)</span>';
+  return `<span class="muted">Will set: ${esc(SF.map[res.status] || "?")}</span>`;
+};
+const sfWhen = r => r.oldDate ? fmtDate(r.oldDate) : "";
+const sfTbl = DataTable($("sfTable"), {
+  placeholder: "Search names, emails, companies…",
+  columns: [
+    { key: "sel", head: '<input type="checkbox" class="sfall" aria-label="Select all rows in this view" title="Select all rows in this view (all pages)">', cls: "sel",
+      value: () => "", html: r => `<input type="checkbox" class="sfsel" data-id="${esc(r.Id)}" aria-label="Select ${esc(r.Name || r.Email)}" ${SF.sel.has(r.Id) ? "checked" : ""}>` },
+    { key: "name", label: "Name", value: r => r.Name.toLowerCase(), html: r => `${esc(r.Name || "—")}${r.Company ? `<br><span class="muted">${esc(r.Company)}</span>` : ""}` },
+    { key: "email", label: "Email", cls: "em", value: r => sfKey(r), html: r => esc(r.Email || "—") },
+    { key: "oldst", label: "Verification status", value: r => r.oldStatus || "", html: r => r.oldStatus ? esc(r.oldStatus) : '<span class="muted">(blank)</span>' },
+    { key: "old", label: "Verified date", value: sfWhen, html: r => r.oldDate ? esc(fmtDate(r.oldDate)) : '<span class="muted">Never</span>' },
+    { key: "status", label: "Now", value: r => sfRes(r) ? ORDER.indexOf(sfRes(r).status) : "", html: r => { const x = sfRes(r); return x ? `${ePill(x)}<br><span class="muted">${esc(whyE(x))}</span>` : '<span class="muted">Not checked</span>'; } },
+    { key: "push", label: "Salesforce", value: r => SF.push.get(r.Id) ? (SF.push.get(r.Id).ok ? 1 : 0) : "", html: sfPushCell },
+  ],
+  filters: [
+    ...ORDER.map(s => ({ value: s, label: STATUS[s].title, test: r => sfRes(r)?.status === s })),
+    { value: "selected", label: "Ticked rows", test: r => SF.sel.has(r.Id) },
+    { value: "never", label: "Never verified before", test: r => !r.oldDate },
+    { value: "blank_status", label: "Verification status blank", test: r => !r.oldStatus },
+    { value: "todo", label: "Not checked yet", test: r => !sfRes(r) },
+    { value: "push_ok", label: "Updated in Salesforce", test: r => SF.push.get(r.Id)?.ok },
+    { value: "push_bad", label: "Salesforce update failed", test: r => SF.push.get(r.Id) && !SF.push.get(r.Id).ok },
+    { value: "push_todo", label: "Checked, not written back yet", test: r => sfPushable(r) },
+  ],
+  text: r => [r.Name, r.Company, r.Email, r.oldStatus, r.Id, r.id18, sfRes(r) && SHORT[sfRes(r).status], SF.push.get(r.Id)?.error].join(" "),
+  onFilter: v => { sfFilter = v || ""; sfRender(); },
+  onExportView: v => sfExport(v),
+  onDraw: v => { const a = $("sfTable").querySelector(".sfall"); if (!a || !SF) return;
+    a.checked = v.length > 0 && v.every(r => SF.sel.has(r.Id)); a.indeterminate = !a.checked && v.some(r => SF.sel.has(r.Id)); a.disabled = !v.length; },
+});
+
+function sfRender() {
+  if (!SF) return;
+  const j = SF, total = j.unique.length, done = [...j.unique].filter(e => j.results.has(e)).length;
+  const pushedOk = [...j.push.values()].filter(x => x.ok).length, pushedBad = [...j.push.values()].filter(x => !x.ok).length;
+  const pushable = j.recs.filter(sfPushable).length;
+  const pct = j.pushing ? Math.round(j.pushing.done / j.pushing.total * 100) : j.running && j.batch?.total ? Math.round(j.batch.done / j.batch.total * 100) : total ? Math.round(done / total * 100) : 0;
+  $("sfFill").style.width = pct + "%"; $("sfBar").setAttribute("aria-valuenow", pct);
+  $("sfTitle").textContent = j.pushing ? `Updating Salesforce… ${pct}%` : j.running ? (j.paused ? "Paused" : `Checking… ${pct}%`)
+    : !done ? `${j.recs.length.toLocaleString()} ${j.plural} to re-verify` : done < total ? (j.stopped ? "Stopped" : `${done.toLocaleString()} checked · ${(total - done).toLocaleString()} still to verify`) : pushedOk && !pushable ? "All done!" : "Checked — ready to update";
+  $("sfCount").textContent = (j.running && j.batch?.partial ? `${j.batch.done} of ${j.batch.total} ticked · ` : "") +
+    `${done.toLocaleString()} of ${total.toLocaleString()} emails checked` + (j.sel.size ? ` · ${j.sel.size.toLocaleString()} ticked` : "") + (j.runId ? saveLabel(j) : "");
+
+  const f = j.fetched, never = j.recs.filter(r => !r.oldDate).length, bad = j.recs.filter(r => !looksLikeEmail(sfKey(r))).length;
+  let sum = `${j.recs.length.toLocaleString()} ${j.plural} with no verification since <b>${esc(f.cutoff)}</b>` +
+    (f.includeBlank ? ` (${never.toLocaleString()} never verified)` : "") + `. ${total.toLocaleString()} unique emails` +
+    (j.recs.length - bad > total ? ` (some records share an email — each email is checked once)` : "") + (bad ? `; ${bad} records have no valid email and are skipped` : "") + ".";
+  if (!done && !j.sel.size) sum += ` Tick rows to verify just those, or verify all.`;
+  if (!done) sum += ` Uses up to ${(j.sel.size ? sfSelTodo().length : total).toLocaleString()} Bouncer credits` + (credits != null ? ` — you have ${Number(credits).toLocaleString()}.` : ".");
+  if (credits != null && !done && credits < total) sum = `Heads up: you have ${Number(credits).toLocaleString()} credits but ${total.toLocaleString()} emails. Mochi will stop when credits run out.<br>` + sum;
+  if (pushedOk || pushedBad) sum += ` <b>${pushedOk.toLocaleString()}</b> updated in Salesforce` + (pushedBad ? `, <b>${pushedBad.toLocaleString()}</b> failed` : "") + ".";
+  if (f.demo) sum += " <i>(Sample records — demo mode.)</i>";
+  for (const w of f.warnings || []) sum += `<br>⚠ ${esc(w)}`;
+  $("sfSummary").innerHTML = sum;
+
+  const counts = Object.fromEntries(ORDER.map(s => [s, 0]));
+  for (const e of j.unique) { const r = j.results.get(e); if (r) counts[ORDER.includes(r.status) ? r.status : "risk"]++; }
+  $("sfTally").hidden = !done;
+  $("sfTally").innerHTML = ORDER.map(s => { const t = STATUS[s].tone;
+    return `<button class="tal ${sfFilter && sfFilter !== s && STATUS[sfFilter] ? "dim" : ""}" data-s="${s}" aria-pressed="${sfFilter === s}" style="--t:var(--${t});--ti:var(--${t}-ink)"><b>${counts[s].toLocaleString()}</b><span>${SHORT[s]}</span></button>`; }).join("");
+  $("sfRunErr").textContent ||= j.fatal || "";
+
+  $("sfMapWrap").hidden = true;
+  if (!$("sfMapWrap").hidden) sfDrawMap();
+
+  let btns;
+  if (j.pushing) btns = "";
+  else if (j.running) btns = `<button class="ghost" id="sfPause">${j.paused ? "Resume" : "Pause"}</button><button class="ghost" id="sfStop">Stop</button>`;
+  else {
+    const left = total - done;
+    const selTodo = j.sel.size ? sfSelTodo().length : 0, selPush = j.sel.size ? sfSelRecs().filter(sfPushable).length : 0;
+    btns = j.sel.size
+      ? (selTodo ? `<button class="go" id="sfGoSel">Verify ${selTodo.toLocaleString()} ticked</button>` : "") +
+        (selPush ? `<button class="go" id="sfPushBtn">Update ${selPush.toLocaleString()} ticked in Salesforce</button>` : "") +
+        (!selTodo && !selPush ? `<button class="go" disabled>Ticked rows are done</button>` : "") +
+        `<button class="ghost" id="sfSelClear">Clear ticks (${j.sel.size.toLocaleString()})</button>`
+      : (left ? `<button class="go" id="sfGo">${done ? `Verify the rest (${left.toLocaleString()})` : `Verify all ${total.toLocaleString()}`}</button>` : "") +
+        (pushable ? `<button class="go" id="sfPushBtn">Update ${pushable.toLocaleString()} ${pushable === 1 ? j.object : j.plural} in Salesforce</button>` : "");
+    btns +=
+      (done ? `<button class="ghost" id="sfDl">Download CSV</button>` : "") +
+      `<button class="ghost" id="sfClose">Close</button>`;
+  }
+  if ($("sfBtns").dataset.k !== btns) { $("sfBtns").innerHTML = btns; $("sfBtns").dataset.k = btns; }
+  sfTbl.set(j.recs, j.running);
+}
+
+$("sfRun").addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t || !SF) return;
+  if (t.classList.contains("tal")) { sfTbl.setFilter(sfFilter === t.dataset.s ? "" : t.dataset.s); return; }
+  switch (t.id) {
+    case "sfGo": sfVerify(); break;
+    case "sfGoSel": sfVerify(sfSelTodo()); break;
+    case "sfSelClear": SF.sel.clear(); if (sfFilter === "selected") sfTbl.setFilter(""); sfRender(); break;
+    case "sfPause": SF.paused = !SF.paused; mood(SF.paused ? "" : "thinking"); sfRender(); break;
+    case "sfStop": SF.stopped = true; break;
+    case "sfPushBtn": sfPush(); break;
+    case "sfDl": sfExport(); break;
+    case "sfClose": SF = null; $("sfRun").hidden = true; mood(""); break;
+  }
+});
+
+$("sfTable").addEventListener("change", e => {
+  if (!SF) return;
+  if (e.target.classList.contains("sfsel")) { e.target.checked ? SF.sel.add(e.target.dataset.id) : SF.sel.delete(e.target.dataset.id); sfRender(); }
+  if (e.target.classList.contains("sfall")) { for (const r of sfTbl.view()) e.target.checked ? SF.sel.add(r.Id) : SF.sel.delete(r.Id); sfRender(); }
+});
+const sfSelRecs = () => SF.recs.filter(r => SF.sel.has(r.Id));
+const sfSelTodo = () => [...new Set(sfSelRecs().map(sfKey).filter(e => looksLikeEmail(e) && !SF.results.has(e)))];
+
+function sfExport(only) {
+  const j = SF, rows = only || j.recs;
+  const out = [[...j.headers, "mochi_result", "bouncer_status", "bouncer_reason", "bouncer_score", "new_" + SF_STATUS_F, "salesforce_update", "salesforce_error"]];
+  for (const r of rows) {
+    const x = sfRes(r), p = j.push.get(r.Id);
+    out.push([r.Id, r.id18, r.Name, r.Company, r.Email, r.oldStatus, fmtDate(r.oldDate),
+      x ? SHORT[x.status] : (looksLikeEmail(sfKey(r)) ? "not_checked" : "skipped"), x?.bouncerStatus || "", x?._error ? "error: " + x._error : x?.reason || "", x?.score ?? "",
+      x && !x._error ? j.map[x.status] || "" : "", p ? (p.ok ? "updated" : "failed") : "", p?.error || ""]);
+  }
+  const cell = v => { v = String(v ?? ""); return /[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
+  download(`salesforce_${j.plural.toLowerCase()}_${new Date().toISOString().slice(0, 10)}${only ? "_filtered" : ""}.csv`, "﻿" + out.map(r => r.map(cell).join(",")).join("\r\n"));
+}
+if (location.hash === "#salesforce") { window.history.replaceState(null, "", location.pathname); setSection("salesforce"); }
+
+// mode badge
+fetch("/api/health").then(r => r.json()).then(async h => {
+  const b = $("badge"); b.hidden = false; apolloMode = h.apollo || "demo";
+  if (h.demo) { isDemo = true; b.textContent = "Demo mode"; b.classList.add("demo"); b.title = "Add BOUNCER_API_KEY to .env for real checks"; return; }
+  try {
+    const c = await (await fetch("/api/credits")).json();
+    if (c.credits != null) credits = Number(c.credits);
+    b.textContent = c.credits != null ? `${Number(c.credits).toLocaleString()} credits` : "Live";
+  } catch { b.textContent = "Live"; }
+}).catch(() => {});
+</script>
+</body>
+</html>
